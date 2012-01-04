@@ -1,0 +1,9 @@
+# ignore compiled python files
+*.pyc
+
+# ignore sublime text project files
+*.sublime-project
+*.sublime-workspace
+
+# ignore south migration folders
+migrations/

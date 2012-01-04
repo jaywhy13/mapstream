@@ -1,0 +1,28 @@
+{% load static %}
+{% get_static_prefix as STATIC_PREFIX %}
+<html>
+	<head>
+		<title>Report an event</title>
+		<script type="text/javascript"
+				src="http://maps.googleapis.com/maps/api/js?key=AIzaSyDstp3Ws288m9jsq0q_zLX3l03xeQK88TQ&sensor=false">
+		</script>
+		<script type="text/javascript" src="{{ STATIC_PREFIX }}js/jquery-1.7.min.js"></script>
+		<script type="text/javascript" src="{{ STATIC_PREFIX }}js/geocode.js"></script>
+	</head>
+	<body onload="init()">
+		<h1>What's Happening?</h1>
+		{% if form.errors %}
+			<p style="color: red;">
+				Please correct the errors {{ form.errors|pluralize }} below.
+			</p>
+		{% endif %}
+
+		<form id="report_form" action="" method="post">{% csrf_token %}
+			<div>
+				{{ form.as_p }}
+			</div>
+			<input id="coded_lat_long">
+			<input id="report_submit_button" type="submit" value="Submit" onclick="validateLocation(); return false;">
+		</form>
+	</body>
+</html>
