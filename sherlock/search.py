@@ -17,6 +17,7 @@ class BasicSearchAgent():
 				data_description = data_obj['description']
 				if 'Jamaica' in data_description:
 					valid_event_count = valid_event_count + 1
+					print 'Need to create event here!!'
 			except KeyError:
 				print 'no description in raw_data #%s - %s\n' % (raw_data.id, raw_data.data)
 		print "we have %s occurences of Jamaica!" % valid_event_count
