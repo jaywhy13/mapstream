@@ -1,5 +1,6 @@
 # ignore compiled python files
 *.pyc
+*.py~
 
 # ignore sublime text project files
 *.sublime-project
