@@ -28,7 +28,6 @@ class BasicSearchAgent():
 					event_report.confidence = 0.5
 					event_report.save()
 					print 'Created new report'
-
 			except KeyError:
 				print 'no description in raw_data #%s - %s\n' % (raw_data.id, raw_data.data)
 		print "we have %s occurences of Jamaica!" % valid_event_count
