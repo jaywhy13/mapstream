@@ -1,6 +1,7 @@
 from django import forms
 from models import EventType
 
+# made a quick comment .... 
 class ReportEventForm(forms.Form):
 	event_type_choices = [(t.id, t.name) for t in EventType.objects.all()]
 	event_type = forms.ChoiceField(choices=event_type_choices)
