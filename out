@@ -1,0 +1,15 @@
+[2012-01-11 16:32:13,955: WARNING/MainProcess] -------------- celery@Odin v2.4.6
+---- **** -----
+--- * ***  * -- [Configuration]
+-- * - **** ---   . broker:      amqp://guest@localhost:5672//
+- ** ----------   . loader:      djcelery.loaders.DjangoLoader
+- ** ----------   . logfile:     out@WARNING
+- ** ----------   . concurrency: 5
+- ** ----------   . events:      OFF
+- *** --- * ---   . beat:        ON
+-- ******* ----
+--- ***** ----- [Queues]
+ --------------   . celery:      exchange:celery (direct) binding:celery
+[2012-01-11 16:32:14,146: WARNING/MainProcess] celery@Odin has started.
+[2012-01-11 16:32:54,725: WARNING/MainProcess] celeryd: Hitting Ctrl+C again will terminate all running tasks!
+[2012-01-11 16:32:54,726: WARNING/MainProcess] celeryd: Warm shutdown (MainProcess)

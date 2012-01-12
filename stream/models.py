@@ -1,5 +1,7 @@
 # from django.db import models
 from django.contrib.gis.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.contrib.auth.models import User
 import datetime
 
@@ -108,4 +110,12 @@ class UserProfile(models.Model):
 	"""This is the core profile of a user in the system"""
 	# api_key .. generated key which a user can use to access the system's rest api (when it's built lol)
 	pass
+
+
+# signals
+@receiver(post_save, sender=EventReport, dispatch_uid="stream.event_report_created")
+def event_report_created(sender, instance, created, **kwargs):
+	print 'An event (%s) has been reported!!' % instance
+	# create a new event here
+
 
