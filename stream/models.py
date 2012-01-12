@@ -115,7 +115,19 @@ class UserProfile(models.Model):
 # signals
 @receiver(post_save, sender=EventReport, dispatch_uid="stream.event_report_created")
 def event_report_created(sender, instance, created, **kwargs):
-	print 'An event (%s) has been reported!!' % instance
+	print "An event (%s) has been reported!!" % instance
 	# create a new event here
+	location_name = "(location to be determined)"
+	new_event = Event()
+	new_event.name = "%s happening at %s" % (instance.event_type, location_name)
+	new_event.event_type = instance.event_type
+	new_event.time_created = datetime.datetime.now()
+	new_event.status = EventStatus.objects.get(name="Unconfirmed")
+	new_event.created_by = User.objects.get(username="system")
+	new_event.save()	# have to call save before trying to add the reports as it is a M2M relationship
+	new_event.reports.add(instance)
+	new_event.save()
+
+
 
 

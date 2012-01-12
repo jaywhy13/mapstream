@@ -12,3 +12,7 @@ migrations/
 
 # ingore temp files
 *.*~
+
+# ignore settings.py
+settings.py
+
