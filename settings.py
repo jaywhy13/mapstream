@@ -1,4 +1,12 @@
 # Django settings for mapstream2 project.
+import djcelery
+djcelery.setup_loader()
+
+# trying a thing from http://docs.celeryq.org/en/latest/userguide/tasks.html#task-names
+import os
+import sys
+sys.path.append(os.getcwd())
+
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -12,9 +20,9 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'mapstream2_db',                      # Or path to database file if using sqlite3.
-        'USER': 'sky',                      # Not used with sqlite3.
-        'PASSWORD': '',                  # Not used with sqlite3.
+        'NAME': 'mapstream',                      # Or path to database file if using sqlite3.
+        'USER': 'jay',                      # Not used with sqlite3.
+        'PASSWORD': 'jay',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
@@ -121,6 +129,7 @@ INSTALLED_APPS = (
     'south',
     'stream',
     'listener',
+    'djcelery',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
@@ -149,3 +158,12 @@ LOGGING = {
         },
     }
 }
+
+
+
+# Broker settings
+BROKER_HOST = "localhost"
+BROKER_PORT = 5672
+BROKER_USER = "guest"
+BROKER_PASSWORD = "guest"
+BROKER_VHOST = "/"

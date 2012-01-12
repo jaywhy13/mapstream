@@ -1,12 +1,19 @@
 import urllib2
 import json
 from mapstream2.listener.models import RawData, DataTag
+from mapstream2.sherlock.search import FacebookAgent
 
-class FacebookLoader():
+class Loader():
+	def load(self, store_data=True):
+		pass
+
+
+class FacebookLoader(Loader):
 	base_url = 'https://graph.facebook.com'
 
 	def __init__(self, data_src=None, object_id=103093949726983, token='AAADWc1jTVEkBAM00FK9cqwOV8HsD2nJjZBrrnWare1r4Htj4OfzX8fNNbwmU2mACjbxkMHxJjvdtRTgZBOtAczezKOMDIZD'):
 		if data_src:
+			print "Setup the data source"
 			self.object_id = data_src.src_id
 			self.data_src = data_src
 		else:
@@ -28,6 +35,10 @@ class FacebookLoader():
 			# do some stuff to fecth a valid token and set it
 		return url
 
+	def load(self, store_data=True):
+		self.load_feed(store_data)
+		
+
 	
 	def load_feed(self, store_data=True):
 		working_url = self._get_working_url('feed')
@@ -36,14 +47,15 @@ class FacebookLoader():
 		f = urllib2.urlopen(working_url)
 		print f.info()
 		data = f.read()
-		print data
+		# print data
 		# try to decode the json string
 		json_obj = json.loads(data)
-		print '\n\n--------------------\n%s' % json_obj['data'][0]
+		# print '\n\n--------------------\n%s' % json_obj['data'][0]
 		
 		if store_data:
 			# store the data in the raw_data model
 			new_tag = DataTag.objects.get(name='new')
+			new_datas = []
 			for data in json_obj['data']:
 				new_data = RawData()
 				new_data.title = data['id']
@@ -52,6 +64,9 @@ class FacebookLoader():
 				new_data.save()
 				new_data.tags.add(new_tag)
 				new_data.save()
+				new_datas.append(new_data)
+			fba = FacebookAgent()
+			fba.search(raw_data_set = new_datas)
 		# except HttpError:
 		# 	print 'Seems like the token has expired ... fetch a new one'
 	
@@ -59,3 +74,10 @@ class FacebookLoader():
 	def request_new_token(self):
 		"""Fetches a new OAUTH token for use with the Facebook Graph API"""
 		pass
+
+
+
+class RssLoader(Loader):
+	pass
+
+
