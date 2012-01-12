@@ -8,6 +8,3 @@
 
 # ignore south migration folders
 migrations/
-
-# ignore settings.py
-settings.py
