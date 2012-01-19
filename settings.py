@@ -2,12 +2,6 @@
 import djcelery
 djcelery.setup_loader()
 
-# trying a thing from http://docs.celeryq.org/en/latest/userguide/tasks.html#task-names
-import os
-import sys
-sys.path.append(os.getcwd())
-
-
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -21,8 +15,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': 'mapstream',                      # Or path to database file if using sqlite3.
-        'USER': 'jay',                      # Not used with sqlite3.
-        'PASSWORD': 'jay',                  # Not used with sqlite3.
+        'USER': 'sky',                      # Not used with sqlite3.
+        'PASSWORD': 'sky',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
@@ -118,6 +112,14 @@ TEMPLATE_DIRS = (
     "/home/sky/development/web/mapstream2/templates",
 )
 
+# Celery settings
+BROKER_HOST = "localhost"
+BROKER_PORT = 5672
+BROKER_USER = "guest"
+BROKER_PASSWORD = "guest"
+BROKER_VHOST = "/"
+CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
+
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -126,10 +128,11 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
+    'djcelery',
     'south',
     'stream',
     'listener',
-    'djcelery',
+    'sherlock',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
@@ -158,12 +161,3 @@ LOGGING = {
         },
     }
 }
-
-
-
-# Broker settings
-BROKER_HOST = "localhost"
-BROKER_PORT = 5672
-BROKER_USER = "guest"
-BROKER_PASSWORD = "guest"
-BROKER_VHOST = "/"

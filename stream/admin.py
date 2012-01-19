@@ -5,6 +5,10 @@ import models
 class TagAdmin(admin.ModelAdmin):
 	list_display = ('name',)
 
+class EventAdmin(admin.ModelAdmin):
+	list_display = ('name', 'description', 'event_type' , 'time_created', 'status')
+	list_filter = ('status',)
+
 class EventTypeAdmin(admin.ModelAdmin):
 	list_display = ('name', 'description',)
 
@@ -23,6 +27,7 @@ class EventReportAdmin(geo_admin.GeoModelAdmin):
 	search_fields = ('title',)
 
 admin.site.register(models.Tag, TagAdmin)
+admin.site.register(models.Event, EventAdmin)
 admin.site.register(models.EventType, EventTypeAdmin)
 admin.site.register(models.EventStatus, EventStatusAdmin)
 geo_admin.site.register(models.GeoObject, SettlementGeoDataAdmin)

@@ -1,30 +1,25 @@
 from mapstream2.listener.models import RawData, DataTag
-from mapstream2.stream.models import EventReport
+from mapstream2.stream.models import EventReport, EventType
 from django.contrib.auth.models import User
 import json
 
 class BasicSearchAlgorithm():
-	 """This agent does a simple search on RawData objects, tagging them as valid if it finds 'Jamaica' in them."""
+	"""This agent does a simple search on RawData objects, tagging them as valid if it finds 'Jamaica' in them."""
 
-	 def __init__(self):
-		 self.sys_user = User.objects.get(username='system')
+	def __init__(self):
+		self.sys_user = User.objects.get(username='system')
 		 
-	 def do_search(self, query='Jamaica', description = ''):
-		 """First Pass of basic search
-		 We fetch all the new raw data and search in them for one of the 14 parishes"""
-		 new_tag = DataTag.objects.get(name='new')
-		 
-		 
-		 
-		 if query in data_description:
-			 event_report = EventReport()
-			 event_report.title = 'Sys created report'
-			 event_report.made_by = self.sys_user
-			 event_report.confidence = 0.5
-			 event_report.save()
-			 print 'Created new report'
-			 
-			 return event_report
+	def do_search(self, query='Jamaica', search_text = ''):
+		"""First pass of basic search algorithm"""
+		if query in search_text:
+			event_report = EventReport()
+			event_report.title = 'Sys created report'
+			event_report.event_type = EventType.objects.all()[0]	# just use the 1st event type for now
+			event_report.made_by = self.sys_user
+			event_report.confidence = 0.5
+			event_report.save()
+			print 'Created new report'
+			return event_report
 
 
 
@@ -42,27 +37,26 @@ class FacebookAgent(BasicAgent):
 		if not raw_data_set:
 			raw_data_set = new_tag.rawdata_set.all()
 			
-			reports = [] 
+		reports = [] 
 
-			for raw_data in raw_data_set:
-				# look in the description for Jamaica
-				data_obj = json.loads(raw_data.data)
-				try:
-					data_description = data_obj['description']
-					bsa = BasicSearchAlgorithm()
+		for raw_data in raw_data_set:
+			# look in the description for Jamaica
+			data_obj = json.loads(raw_data.data)
+			try:
+				data_description = data_obj['description']
+				bsa = BasicSearchAlgorithm()
 
-					report = bsa.do_search(query,data_description)
-					if report:
-						reports.append(report)
+				report = bsa.do_search(query,data_description)
+				if report:
+					reports.append(report)
 
-						
-				except KeyError:
-					print 'no description in raw_data #%s - %s\n' % (raw_data.id, raw_data.data)
+					
+			except KeyError:
+				print 'no description in raw_data #%s - %s\n' % (raw_data.id, raw_data.data)
 					
 					
 					
 class RssAgent(BasicAgent):
-
 	pass
 
 

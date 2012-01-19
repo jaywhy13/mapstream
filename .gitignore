@@ -10,4 +10,10 @@
 # ignore south migration folders
 migrations/
 
-#ignore settings.py
+
+
+# ingore temp files
+*.*~
+
+# ignore settings.py
+settings.py
