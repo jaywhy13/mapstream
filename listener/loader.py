@@ -1,7 +1,15 @@
 import urllib2
+#import libxml2dom
 import json
 from mapstream2.listener.models import RawData, DataTag
 from mapstream2.sherlock.search import FacebookAgent
+from mapstream2.listener.greader.googlereader import *
+from mapstream2.listener.greader.url import *
+from mapstream2.listener.greader.items import *
+from mapstream2.listener.greader.auth import *
+
+import feedparser
+import leaf
 
 class Loader():
 	def load(self, store_data=True):
@@ -58,7 +66,8 @@ class FacebookLoader(Loader):
 			new_datas = []
 			for data in json_obj['data']:
 				new_data = RawData()
-				new_data.title = data['id']
+				new_data.title = data.get('name',data['id'])
+				new_data.data_id = data['id']
 				new_data.source = self.data_src
 				new_data.data = json.dumps(data)
 				new_data.save()
@@ -77,7 +86,80 @@ class FacebookLoader(Loader):
 
 
 
+class GoogleReaderLoader(Loader):
+
+	def __init__(self, data_src):
+		self.url = data_src.src_id
+		self.source_node = data_src
+		self.parameters = data_src.getParameters()
+		
+		# check for crucial parameters
+		self.username = self.parameters.get('username','adventistvoices@gmail.com')
+		self.psw = self.parameters.get('password','choirpassword')
+		self.article_css_selector = self.parameters.get('article-css-selector','')
+
+
+	def load(self, store_data = True):
+		print "Connecting as %s" % self.username
+		auth = ClientAuthMethod(self.username,self.psw)
+		
+		reader = GoogleReader(auth)
+		if reader.buildSubscriptionList():
+			feeds = reader.getSubscriptionList()
+			new_tag = DataTag.objects.get(name='new')
+			new_datas = []
+			for feed in feeds:
+				print "Reading " + feed.title + " (%s unread)" % feed.unread
+				print "===================================================="
+				feed.loadItems()
+				print " Loaded %s items" % (len(feed.items),)
+				print
+				for item in feed.items:
+					title = item.title
+					url = item.url
+					f = urllib.urlopen(url)
+					html = f.read()
+					doc = leaf.parse(html)
+					elements = doc(self.article_css_selector)
+					for element in elements:
+						print "Saving article: %s" % title
+						print
+						article_html = element.html()
+						new_data = RawData()
+						new_data.title = title
+						new_data.source = self.source_node
+						new_data.data = article_html
+						new_data.save()
+						new_data.tags.add(new_tag)
+						new_data.save()
+						new_datas.append(new_data)
+			return new_datas
+		return None
+				
+				
+
 class RssLoader(Loader):
-	pass
+
+	def __init__(self, data_src):
+		self.url = data_src.src_id
+		self.source_node = data_src
+
+	def fetch_data(self):
+		""" Override fetch data of parent
+		Uses the feedparser library to fetch the contents of an RSS feed from a given url. The entries in the
+		result are then used to create a new RawData object."""
+		data = feedparser.parse(self.url)
+		print data
+		# add data to 'RawData table'
+		for entry in data.entries:
+			rd = RawData()
+			rd.title = entry.title
+			rd.data = entry
+			rd.source = self.source_node
+			rd.save()
+		return data
 
 
+	def load(self, store_data = True):
+		self.fetch_data()
+	

@@ -20,8 +20,12 @@ class RawDataAdmin(admin.ModelAdmin):
 	list_filter = ("source", "time_added", "tags")
 
 
+class DataSourceParameterAdmin(admin.ModelAdmin):
+	list_display = ('name','value',)
+
 admin.site.register(models.DataTag, DataTagAdmin)
 admin.site.register(models.DataSourceType, DataSourceTypeAdmin)
 admin.site.register(models.DataSourceStatus, DataSourceStatusAdmin)
 admin.site.register(models.DataSource, DataSourceAdmin)
 admin.site.register(models.RawData, RawDataAdmin)
+admin.site.register(models.DataSourceParameter,DataSourceParameterAdmin)
