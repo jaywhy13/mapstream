@@ -97,6 +97,7 @@ class GoogleReaderLoader(Loader):
 		self.username = self.parameters.get('username','adventistvoices@gmail.com')
 		self.psw = self.parameters.get('password','choirpassword')
 		self.article_css_selector = self.parameters.get('article-css-selector','')
+		self.fetch_limit = self.parameters.get('fetch-limit',50)
 
 
 	def load(self, store_data = True):
@@ -108,35 +109,65 @@ class GoogleReaderLoader(Loader):
 			feeds = reader.getSubscriptionList()
 			new_tag = DataTag.objects.get(name='new')
 			new_datas = []
+			fetch_count = 0
+
+			# loop through and store feeds we already have RawData for
+
+
 			for feed in feeds:
+				read_items = []
 				print "Reading " + feed.title + " (%s unread)" % feed.unread
 				print "===================================================="
-				feed.loadItems()
-				print " Loaded %s items" % (len(feed.items),)
 				print
+				print "Loading items"
+				print
+				feed.loadItems()
+				print "Loaded %s items" % (len(feed.items),)
+				print
+				index = 0
 				for item in feed.items:
+					# make sure it doesn't already exist
 					title = item.title
 					url = item.url
+					index+=1
+
+					if index + 1 >= len(feed.items) and fetch_count < self.fetch_limit:
+						print "Loading more items...."
+						print
+						feed.loadMoreItems()
+
+					if len(RawData.objects.filter(data_id=item.id,source=self.source_node)) > 0 or item in read_items:
+						print "   Skipping %s, we already saved it." % title
+						continue
+
 					f = urllib.urlopen(url)
 					html = f.read()
 					doc = leaf.parse(html)
 					elements = doc(self.article_css_selector)
 					for element in elements:
-						print "Saving article: %s" % title
+						print " + Saving article: %s" % title
 						print
 						article_html = element.html()
 						new_data = RawData()
 						new_data.title = title
 						new_data.source = self.source_node
 						new_data.data = article_html
+						new_data.data_id = item.id
 						new_data.save()
 						new_data.tags.add(new_tag)
-						new_data.save()
 						new_datas.append(new_data)
+						read_items.append(item)
+						fetch_count +=1
+
+				print
+				print "All done.\n %s items fetched, our limit is %s. There are %s feeds. We stopped at index %s" % (fetch_count, self.fetch_limit, len(feed.items),index)
+
 			return new_datas
 		return None
 				
-				
+	
+
+
 
 class RssLoader(Loader):
 
