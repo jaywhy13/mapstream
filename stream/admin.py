@@ -26,9 +26,13 @@ class EventReportAdmin(geo_admin.GeoModelAdmin):
 	list_filter = ('time_of_report',)
 	search_fields = ('title',)
 
+class SecureViewAdmin(admin.ModelAdmin):
+	list_display = ('key', 'url',)
+
 admin.site.register(models.Tag, TagAdmin)
 admin.site.register(models.Event, EventAdmin)
 admin.site.register(models.EventType, EventTypeAdmin)
 admin.site.register(models.EventStatus, EventStatusAdmin)
+admin.site.register(models.SecureView, SecureViewAdmin)
 geo_admin.site.register(models.GeoObject, SettlementGeoDataAdmin)
 geo_admin.site.register(models.EventReport, EventReportAdmin)
