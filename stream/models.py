@@ -3,7 +3,7 @@ from django.contrib.gis.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
-import datetime
+import datetime, random, string
 
 # These are the core models of the system
 
@@ -60,6 +60,7 @@ class EventReport(models.Model):
 class EventType(models.Model):
 	name = models.CharField(max_length=255)
 	description = models.TextField(max_length=500, blank=True, null=True)
+	keyword = models.CharField(max_length=255)
 
 	def __unicode__(self):
 		return self.name
@@ -94,6 +95,12 @@ class Event(models.Model):
 		hr_before = datetime.datetime.now() - datetime.timedelta(hours=1)
 		return self.time_created > hr_before
 
+	def get_location(self):
+		# just return (0,0) for now
+		lat = 0.0
+		lon = 0.0
+		return (lat, lon)
+
 	@staticmethod
 	def get_open_events():
 		hr_before = datetime.datetime.now() - datetime.timedelta(hours=1)
@@ -110,6 +117,18 @@ class UserProfile(models.Model):
 	"""This is the core profile of a user in the system"""
 	# api_key .. generated key which a user can use to access the system's rest api (when it's built lol)
 	pass
+
+
+def _random_key():
+	return ''.join(random.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for x in range(30))
+
+class SecureView(models.Model):
+	key = models.CharField(max_length=255, unique=True, default=_random_key)
+	url = models.CharField(max_length=500)
+
+	def __unicode__(self):
+		return u"%s -> %s" % (self.key, self.url)
+
 
 
 # signals
