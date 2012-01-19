@@ -30,6 +30,13 @@ class DataSourceStatus(models.Model):
 	def __unicode__(self):
 		return u"%s" % self.name
 
+class DataSourceParameter(models.Model):
+	"""This model stores extra parameters for the data source such as password"""
+	name = models.CharField(max_length=255)
+	value = models.TextField(max_length=500)
+
+	def __unicode__(self):
+		return u"%s : %s" % (self.name, self.value)
 
 class DataSource(models.Model):
 	"""An instance of the datasource type: eg ODPEM facebook feed"""
@@ -39,16 +46,27 @@ class DataSource(models.Model):
 	date_added = models.DateTimeField(default=datetime.datetime.now())
 	state = models.ForeignKey("DataSourceStatus")
 	time_last_active = models.DateTimeField(blank=True, null=True)
+	parameters = models.ManyToManyField("DataSourceParameter")
+
+	def getParameters(self):
+		dict = {}
+		for parameter in self.parameters.all():
+			dict[parameter.name] = parameter.value
+		return dict
+
 
 	def __unicode__(self):
 		return u"%s: %s" % (self.src_type, self.src_id)
 
 
+
 class RawData(models.Model):
-	title = models.CharField(max_length=50)
+	title = models.CharField(max_length=255)
 	source = models.ForeignKey("DataSource")
 	data = models.TextField(blank=True, null=True)
+	data_id = models.CharField(max_length=255,blank=True,null=True)
 	time_added = models.DateTimeField(default=datetime.datetime.now())
+	time_created = models.DateTimeField(default=datetime.datetime.now())
 	tags = models.ManyToManyField("DataTag")
 	# metadata column ---> more info
 	def __unicode__(self):
