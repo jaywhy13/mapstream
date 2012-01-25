@@ -16,7 +16,7 @@ class BasicSearchAlgorithm():
 	def do_search(self, search_text = None, title = None):
 
 		"""First pass of basic search algorithm"""
-		#search_text = search_text.lower()
+		search_text = search_text.lower()
 		# loop over our location
 
 		print "Running basic search on text: %s" % title
@@ -36,7 +36,7 @@ class BasicSearchAlgorithm():
 				models = model_instance.objects.all()
 
 				for model in models:
-					geotitle = eval('model.' + search_field + '.strip().title()')
+					geotitle = eval('model.' + search_field + '.strip().lower()')
 
 					if not geotitle:
 						continue
