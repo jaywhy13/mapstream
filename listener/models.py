@@ -46,7 +46,7 @@ class DataSource(models.Model):
 	date_added = models.DateTimeField(default=datetime.datetime.now())
 	state = models.ForeignKey("DataSourceStatus")
 	time_last_active = models.DateTimeField(blank=True, null=True)
-	parameters = models.ManyToManyField("DataSourceParameter")
+	parameters = models.ManyToManyField("DataSourceParameter",blank=True,null=True)
 
 	def getParameters(self):
 		dict = {}
@@ -69,5 +69,12 @@ class RawData(models.Model):
 	time_created = models.DateTimeField(default=datetime.datetime.now())
 	tags = models.ManyToManyField("DataTag")
 	# metadata column ---> more info
+
+	""" add a raw_text column to replace data. Let data remain as a searchable column
+	that can be potentially be passed directly to a search agent. 
+	"""
 	def __unicode__(self):
 		return u"%s (%s)" % (self.title, self.source)
+
+
+

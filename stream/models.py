@@ -34,14 +34,23 @@ class GeoObject(models.Model):
 	perimeter = models.FloatField()
 	acres = models.FloatField()
 	hectares = models.FloatField()
-	area_sqkm = models.FloatField()
+	area_sqkm = models.FloatField(blank=True,null=True)
 
 	geom = models.MultiPolygonField()
-	centroid = models.PointField(null=True, blank=True)
 	objects = models.GeoManager()
 
 	def __unicode__(self):
 		return self.community
+
+class Road(models.Model):
+    name = models.CharField(max_length=19)
+    count = models.FloatField()
+    first_clas = models.CharField(max_length=75)
+    geom = models.PointField(srid=4326)
+    objects = models.GeoManager()
+
+    def __unicode__(self):
+	    return self.name
 
 
 class EventReport(models.Model):
@@ -53,6 +62,24 @@ class EventReport(models.Model):
 	location = models.PointField(default='POINT(0 0)')
 	# eventually reports may contain pictures, audio and even video
 
+	def get_matching_events(self):
+		result = []
+		events = Event.objects.filter(event_type = self.event_type)
+		event_type = self.event_type
+		for event in events:
+			if event.location and self.location:
+				distance = event.location.distance(self.location)
+				if distance < event_type.distance_threshold and event.name == self.title:
+					result.append(event)
+			else:
+				print "No location information available for: %s" % event
+					
+		return result
+				
+	def has_matching_events(self):
+		return len(self.get_matching_events()) > 0
+
+
 	def __unicode__(self):
 		return "%s by %s %s" % (self.title, self.made_by, self.time_of_report)
 
@@ -61,6 +88,15 @@ class EventType(models.Model):
 	name = models.CharField(max_length=255)
 	description = models.TextField(max_length=500, blank=True, null=True)
 	keyword = models.CharField(max_length=255)
+	distance_threshold = models.FloatField(default=0) # distance in meters, 0 for none
+	report_threshold = models.IntegerField(default=-0) # report threshold, 0 to disregard (in seconds)
+	
+	def has_distance_threshold(self):
+		return self.distance_threshold > 0
+
+	def has_report_threshold(self):
+		return self.time_threshold > 0
+	
 
 	def __unicode__(self):
 		return self.name
@@ -83,10 +119,11 @@ class Event(models.Model):
 	event_type = models.ForeignKey("EventType")
 	time_created = models.DateTimeField()
 	created_by = models.ForeignKey(User)
+	updated_at = models.DateTimeField(default=datetime.datetime.now())
 	status = models.ForeignKey("EventStatus")	# things like: confirmed_by_vote, unconfirmed, invalidated_by_editor etc
 	reports = models.ManyToManyField("EventReport")
 	votes = models.ManyToManyField("Vote", blank=True)	# user votes on event validity
-	# location = models.ForeignKey('GeoObject')	# location - this is a geo_object (can be a point, a polygon etc)
+	location = models.PointField(default='POINT(0 0)')	# location - this is a geo_object (can be a point, a polygon etc)
 
 	def __unicode__(self):
 		return self.name
@@ -143,21 +180,39 @@ class SecureViewParameter(models.Model):
 
 
 
+class GeoLocation(models.Model):
+	classname = models.CharField(max_length=255)
+	search_field = models.CharField(max_length=255)
+
+
 # signals
 @receiver(post_save, sender=EventReport, dispatch_uid="stream.event_report_created")
 def event_report_created(sender, instance, created, **kwargs):
-	print "An event (%s) has been reported!!" % instance
-	# create a new event here
-	location_name = "(location to be determined)"
-	new_event = Event()
-	new_event.name = "%s happening at %s" % (instance.event_type, location_name)
-	new_event.event_type = instance.event_type
-	new_event.time_created = datetime.datetime.now()
-	new_event.status = EventStatus.objects.get(name="Unconfirmed")
-	new_event.created_by = User.objects.get(username="system")
-	new_event.save()	# have to call save before trying to add the reports as it is a M2M relationship
-	new_event.reports.add(instance)
-	new_event.save()
+	# first check to see if the event has already been reported
+	print "  ** Trigger called... post save report"
+	if instance.has_matching_events():
+		print " >> This event already has matching events. Will update number of reports for this event..."
+		for event in instance.get_matching_events():
+			event.reports.add(instance)
+			event.updated_at = datetime.datetime.now()
+			event.save()
+	else:
+		print "  ** An event (%s) has been reported!!" % instance
+		# create a new event here
+		location_name = "(location to be determined)"
+		new_event = Event()
+		new_event.name = "%s happening at %s" % (instance.event_type, location_name)
+		new_event.name = instance.title
+		new_event.event_type = instance.event_type
+		new_event.time_created = instance.time_of_report
+		new_event.status = EventStatus.objects.get(name="Unconfirmed")
+		new_event.created_by = User.objects.get(username="system")
+		new_event.location = instance.location
+		new_event.save()	# have to call save before trying to add the reports as it is a M2M relationship
+		new_event.reports.add(instance)
+		new_event.save()
+		print " >> New event created"
+	print
 
 
 
