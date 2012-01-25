@@ -15,7 +15,7 @@ urlpatterns = patterns('',
     # data api:
     url(r'^data/(\w+)/(\w*)', views.list_data, name='data_api'),
     #secure api: Only allows access to preconfigured views
-    url(r'^data/(\w+)', views.secure_list_data, name='secure_data_api'),
+    # url(r'^data/(\w+)', views.secure_list_data, name='secure_data_api'),
 
     # listener api:
     url(r'^listener/(\w+)/(\w*)', l_api.list_data, name='listener_api'),	# will make it more strict eventually -- dont remember what this is for!!

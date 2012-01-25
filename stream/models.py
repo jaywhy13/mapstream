@@ -85,7 +85,7 @@ class Event(models.Model):
 	created_by = models.ForeignKey(User)
 	status = models.ForeignKey("EventStatus")	# things like: confirmed_by_vote, unconfirmed, invalidated_by_editor etc
 	reports = models.ManyToManyField("EventReport")
-	votes = models.ManyToManyField("Vote")	# user votes on event validity
+	votes = models.ManyToManyField("Vote", blank=True)	# user votes on event validity
 	# location = models.ForeignKey('GeoObject')	# location - this is a geo_object (can be a point, a polygon etc)
 
 	def __unicode__(self):
@@ -125,9 +125,21 @@ def _random_key():
 class SecureView(models.Model):
 	key = models.CharField(max_length=255, unique=True, default=_random_key)
 	url = models.CharField(max_length=500)
+	parameters = models.ManyToManyField("SecureViewParameter", blank=True)
 
 	def __unicode__(self):
 		return u"%s -> %s" % (self.key, self.url)
+	
+	@property
+	def view_parameters(self):
+		return u', '.join(["%s" % param for param in self.parameters.all()])
+
+class SecureViewParameter(models.Model):
+	keyword = models.CharField(max_length=255)
+	value = models.TextField(max_length=500, blank=True, null=True)
+
+	def __unicode__(self):
+		return u"%s: %s" % (self.keyword, self.value)
 
 
 

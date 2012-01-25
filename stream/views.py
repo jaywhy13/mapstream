@@ -44,30 +44,46 @@ def report_event(request):
 	return render_to_response('report_event.html', context)
 
 
-def list_data(request, objectType, objectId=None):
-	default = HttpResponse("Unknown object type requested")
+def list_data(request, objectType, objectId=None, secure_params=None):
+	# try to load a secure view if the object type is unknown
+	default = lambda: secure_list_data(request, objectType)
 	result = {
-		"event": _list_event(request, objectId),
+		"event": _list_event(request, objectId, secure_params=secure_params),
 	}
-	return result.get(objectType, default)
+	return result.get(objectType, default())
 
 def secure_list_data(request, view_key):
+	# return HttpResponse('try to show a secure view')
 	try:
 		secure_view = SecureView.objects.get(key=view_key)
 		url = secure_view.url
 		view, args, kwargs = resolve(url)
-		# kwargs['request'] = request
-		print "fetch view for %s; with args %s" % (url, args)
+
+		# add each parameter to the request GET
+		params = secure_view.parameters.all()
+		if params:
+			param_list = {}
+			for param in params:
+				param_list[param.keyword] = param.value # THIS IS IMMUTABLE ... nooooooo
+			kwargs['secure_params'] = param_list
+
+		for a in args:
+			print "arg: %s" % a
+
+		print "fetch view %s for %s; with args %s" % (view, url, args)
 		# run the view function
 		return view(request, *args, **kwargs)
+		# return HttpResponse("Done")
 	except SecureView.DoesNotExist:
-		return HttpResponse("Unknown view requested")
+		return HttpResponse("Unknown object requested")
 
 
-def _list_event(request, objectId):
-	pretty = 'pretty' in request.GET
-	if 'format' in request.GET and request.GET['format']:
-		format = request.GET['format']
+def _list_event(request, objectId, secure_params=None):
+	parameters = _choose_parameters(request, secure_params)
+	pretty = 'pretty' in parameters
+	print 'pretty is in params'
+	if 'format' in parameters and parameters['format']:
+		format = parameters['format']
 	else:
 		format = 'display'	# display means ordinary json for now
 	
@@ -76,7 +92,7 @@ def _list_event(request, objectId):
 			cleanId = int(objectId)
 			events = [Event.objects.get(id=cleanId)]
 			if format == 'map':
-				event_json = _prepare_map_json(request, events)
+				event_json = _prepare_map_json(request, events, secure_params)
 			else:
 				event_json = serializers.serialize('json', events, indent=4 if pretty else None, sort_keys=pretty)
 		except Event.DoesNotExist:
@@ -87,13 +103,14 @@ def _list_event(request, objectId):
 	else:
 		events = Event.objects.all()
 		if format == 'map':
-			event_json = _prepare_map_json(request, events)
+			event_json = _prepare_map_json(request, events, secure_params)
 		else:
 			event_json = serializers.serialize('json', events, indent=4 if pretty else None, sort_keys=pretty)
 		return HttpResponse(event_json, content_type='application/json')
 
-def _prepare_map_json(request, events):
-	pretty = 'pretty' in request.GET
+def _prepare_map_json(request, events, secure_params=None):
+	parameters = _choose_parameters(request, secure_params)
+	pretty = 'pretty' in parameters
 	print 'formating for map!'
 	results = []
 	for event in events:
@@ -107,3 +124,9 @@ def _prepare_map_json(request, events):
 		results.append(map_event)
 	map_json = json.dumps(results, indent=4 if pretty else None, sort_keys=pretty)
 	return map_json
+
+def _choose_parameters(request, secure_params):
+	if secure_params:
+		return secure_params
+	else:
+		return request.GET

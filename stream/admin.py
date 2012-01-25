@@ -27,12 +27,16 @@ class EventReportAdmin(geo_admin.GeoModelAdmin):
 	search_fields = ('title',)
 
 class SecureViewAdmin(admin.ModelAdmin):
-	list_display = ('key', 'url',)
+	list_display = ('key', 'url', 'view_parameters',)
+
+class SecureViewParameterAdmin(admin.ModelAdmin):
+	list_display = ('keyword', 'value',)
 
 admin.site.register(models.Tag, TagAdmin)
 admin.site.register(models.Event, EventAdmin)
 admin.site.register(models.EventType, EventTypeAdmin)
 admin.site.register(models.EventStatus, EventStatusAdmin)
 admin.site.register(models.SecureView, SecureViewAdmin)
+admin.site.register(models.SecureViewParameter, SecureViewParameterAdmin)
 geo_admin.site.register(models.GeoObject, SettlementGeoDataAdmin)
 geo_admin.site.register(models.EventReport, EventReportAdmin)
