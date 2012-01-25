@@ -90,6 +90,7 @@ class EventType(models.Model):
 	keyword = models.CharField(max_length=255)
 	distance_threshold = models.FloatField(default=0) # distance in meters, 0 for none
 	report_threshold = models.IntegerField(default=-0) # report threshold, 0 to disregard (in seconds)
+	colour = models.CharField(max_length="10", default="#5e5e5e")
 	
 	def has_distance_threshold(self):
 		return self.distance_threshold > 0
@@ -97,9 +98,9 @@ class EventType(models.Model):
 	def has_report_threshold(self):
 		return self.time_threshold > 0
 	
-
 	def __unicode__(self):
 		return self.name
+
 
 class EventStatus(models.Model):
 	name = models.CharField(max_length=255)
@@ -133,7 +134,7 @@ class Event(models.Model):
 		return self.time_created > hr_before
 
 	def get_location(self):
-		# just return (0,0) for now
+		# just return the event location for now
 		lat = 0.0
 		lon = 0.0
 		return (lat, lon)

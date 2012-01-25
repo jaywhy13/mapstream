@@ -43,12 +43,12 @@ class BasicSearchAlgorithm():
 
 					if geotitle in search_text:
 						for event_type in event_types:
-							# print "    Searching for event type: %s (keyword=%s)" % (event_type,event_type.keyword)
+							print "    Searching for event type: %s (keyword=%s)" % (event_type,event_type.keyword)
 							if event_type.keyword:
 								words = Word.get_all_word_forms(event_type.keyword)
-								# print "     - Will search in %s" % [word for word in words]
+								print "     - Will search in %s" % [word for word in words]
 								for word in words:
-									# print "     Searching text for %s" % word
+									print "     Searching text for %s" % word
 									if word in search_text:
 										print " ++ Matched word: %s in %s" % (word,geotitle)
 										report = self._create_event_report()
