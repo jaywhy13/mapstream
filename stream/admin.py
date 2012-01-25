@@ -5,7 +5,7 @@ import models
 class TagAdmin(admin.ModelAdmin):
 	list_display = ('name',)
 
-class EventAdmin(admin.ModelAdmin):
+class EventAdmin(geo_admin.GeoModelAdmin):
 	list_display = ('name', 'description', 'event_type' , 'time_created', 'status')
 	list_filter = ('status',)
 
@@ -16,7 +16,7 @@ class EventStatusAdmin(admin.ModelAdmin):
 	list_display = ('name', 'description',)
 
 class SettlementGeoDataAdmin(geo_admin.GeoModelAdmin):
-	list_display = ('community', 'parish', 'pop2001_field', 'area', 'area_sqkm', 'centroid')
+	list_display = ('community', 'parish', 'pop2001_field', 'area', 'area_sqkm')
 	list_filter = ('parish',)
 	search_fields = ('community',)
 	ordering = ('community',)
@@ -29,10 +29,15 @@ class EventReportAdmin(geo_admin.GeoModelAdmin):
 class SecureViewAdmin(admin.ModelAdmin):
 	list_display = ('key', 'url',)
 
+class GeoLocationAdmin(admin.ModelAdmin):
+	list_display = ['classname','search_field']
+
+
 admin.site.register(models.Tag, TagAdmin)
 admin.site.register(models.Event, EventAdmin)
 admin.site.register(models.EventType, EventTypeAdmin)
 admin.site.register(models.EventStatus, EventStatusAdmin)
 admin.site.register(models.SecureView, SecureViewAdmin)
+admin.site.register(models.GeoLocation,GeoLocationAdmin)
 geo_admin.site.register(models.GeoObject, SettlementGeoDataAdmin)
 geo_admin.site.register(models.EventReport, EventReportAdmin)

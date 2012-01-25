@@ -18,6 +18,7 @@ class DataSourceAdmin(admin.ModelAdmin):
 class RawDataAdmin(admin.ModelAdmin):
 	list_display = ('title', 'source', 'time_added')
 	list_filter = ("source", "time_added", "tags")
+	search_fields = ('title', 'data')
 
 
 class DataSourceParameterAdmin(admin.ModelAdmin):

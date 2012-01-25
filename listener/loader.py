@@ -1,7 +1,7 @@
 import urllib2
 #import libxml2dom
 import json
-from mapstream2.listener.models import RawData, DataTag
+from mapstream2.listener.models import RawData, DataTag, DataSource, DataSourceType
 from mapstream2.sherlock.search import FacebookAgent
 from mapstream2.listener.greader.googlereader import *
 from mapstream2.listener.greader.url import *
@@ -12,9 +12,16 @@ import feedparser
 import leaf
 
 class Loader():
+	source_type = None
+
 	def load(self, store_data=True):
 		pass
 
+	def get_data_sources(self, new_only=True):
+		if self.source_type:
+			sources = DataSource.objects.filter(src_type=self.source_type)
+			return sources
+		return None
 
 class FacebookLoader(Loader):
 	base_url = 'https://graph.facebook.com'
@@ -26,9 +33,10 @@ class FacebookLoader(Loader):
 			self.data_src = data_src
 		else:
 			self.object_id = object_id
+			print "Could not set the datasource"
 		self.token = token
 		self.base_url = '%s/%s' % (self.base_url, self.object_id)
-
+		self.source_type = DataSourceType.objects.get(name='Facebook')
 	
 	def _get_working_url(self, data_type):
 		default = 'Data type "%s" is unsupported' % data_type
@@ -65,8 +73,16 @@ class FacebookLoader(Loader):
 			new_tag = DataTag.objects.get(name='new')
 			new_datas = []
 			for data in json_obj['data']:
+				fblinktype = data.get('type',None)
 				new_data = RawData()
-				new_data.title = data.get('name',data['id'])
+				title = data.get('name',data['id'])
+				if fblinktype:
+					if fblinktype == "link" and data.get('description',None):
+						title = data.get('description')[:30] + '...'
+					elif data.get('message',None):
+						title = data.get('message')[:30] + '...'
+
+				new_data.title = title
 				new_data.data_id = data['id']
 				new_data.source = self.data_src
 				new_data.data = json.dumps(data)
@@ -92,12 +108,17 @@ class GoogleReaderLoader(Loader):
 		self.url = data_src.src_id
 		self.source_node = data_src
 		self.parameters = data_src.getParameters()
+
+		# set the src type
+		self.source_type = DataSourceType.objects.get(name='GoogleReader')
 		
 		# check for crucial parameters
 		self.username = self.parameters.get('username','adventistvoices@gmail.com')
 		self.psw = self.parameters.get('password','choirpassword')
 		self.article_css_selector = self.parameters.get('article-css-selector','')
 		self.fetch_limit = self.parameters.get('fetch-limit',50)
+
+
 
 
 	def load(self, store_data = True):
