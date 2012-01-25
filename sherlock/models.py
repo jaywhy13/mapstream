@@ -46,11 +46,14 @@ class Word(models.Model):
 		if word:
 			return word.get_all_forms()
 		else:
-			return None
+			return []
 
 	@staticmethod
 	def get_word(text):
-		return Word.objects.get(root=text)
+		try:
+			return Word.objects.get(root=text)
+		except:
+			return None
 
 	
 
