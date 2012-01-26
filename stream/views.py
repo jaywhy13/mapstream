@@ -127,7 +127,7 @@ def _prepare_map_json(request, events, secure_params=None):
 		map_event['type'] = "point"
 		map_event['Longitude'] = '%s' % event.location.coords[0]
 		map_event['Latitude'] = '%s' % event.location.coords[1]
-		map_event['layer_id'] = 0 # using zero as the id for now
+		map_event['layer_id'] = event.event_type.id
 		results.append(map_event)
 	map_result = {
 		"timestamp": time.time(),
@@ -154,7 +154,7 @@ def get_map_settings(request, secure_params=None):
 			"id": event_type.id,
 			"label": event_type.name,
 			"description": event_type.description,
-			"colour": event_type.colour,
+			"color": event_type.colour,
 		}
 		layer_list.append(layer)
 	# for now return some default level
@@ -162,7 +162,7 @@ def get_map_settings(request, secure_params=None):
 		"id": 0,
 		"label": "Parish",
 		"max_zoom": 25,
-		"colour": "#00c0ff",
+		"color": "#00c0ff",
 	}
 	level_list.append(level)
 	settings = {
