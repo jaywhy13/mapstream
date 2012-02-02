@@ -13,15 +13,15 @@ class BasicSearchAlgorithm():
 	def __init__(self):
 		self.sys_user = User.objects.get(username='system')
 
-	def do_search(self, search_text = None, title = None):
+	def do_search(self, search_text = None, title = None, raw_data = None):
 
 		"""First pass of basic search algorithm"""
-		search_text = search_text.lower()
+		#search_text = search_text.lower()
 		# loop over our location
 
-		print "Running basic search on text: %s" % title
+		#print "Running basic search on text: %s" % title
 
-		locations = GeoLocation.objects.all()
+		locations = GeoLocation.objects.all() # need to do heirarchical search, parish then community
 		event_types = EventType.objects.all()
 		reports = []
 		
@@ -36,7 +36,7 @@ class BasicSearchAlgorithm():
 				models = model_instance.objects.all()
 
 				for model in models:
-					geotitle = eval('model.' + search_field + '.strip().lower()')
+					geotitle = eval('model.' + search_field + '.strip().title()')
 
 					if not geotitle:
 						continue
@@ -53,11 +53,22 @@ class BasicSearchAlgorithm():
 										print " ++ Matched word: %s in %s" % (word,geotitle)
 										report = self._create_event_report()
 										if title:
+											if geotitle not in title:
+												title = title + " (" + geotitle + ")"
 											report.title = title
+
+
 										report.event_type = event_type
 										report.location = model.geom.centroid
-										report.save()
-										reports.append(report)
+										if raw_data:
+											report.occurred_at = raw_data.occurred_at
+											report.link = raw_data.link
+
+										# only save the report if it doesn't exist
+										if not report.exists():
+											report.save()
+											reports.append(report)
+											
 			except Exception as e:
 				print "ERROR: %s" % e
 		return reports
@@ -71,7 +82,7 @@ class BasicSearchAlgorithm():
 		event_report.made_by = self.sys_user
 		event_report.confidence = 0.5
 		#event_report.save()	# triggers Event creation
-		print ' >> Created new report'
+		#print ' >> Created new report'
 		return event_report
 
 	def search_word(self, query, search_text):
@@ -109,7 +120,8 @@ class FacebookAgent(BasicAgent):
 				if report:
 					reports.append(report)					
 			except KeyError:
-				print 'no description in raw_data #%s - %s\n' % (raw_data.id, raw_data.data)
+				#print 'no description in raw_data #%s - %s\n' % (raw_data.id, raw_data.data)
+				pass
 
 	def search(self, raw_data_set=None):
 		"""Searches a collection of RawData with terms provided by the query array"""
@@ -123,7 +135,7 @@ class FacebookAgent(BasicAgent):
 			raw_data_set = new_tag.rawdata_set.filter(source__in=fb_data_sources)
 			
 		all_reports = []
-		print "Will search %s Facebook sources" % len(raw_data_set)
+		#print "Will search %s Facebook sources" % len(raw_data_set)
 
 		for raw_data in raw_data_set:
 			# look in the description for Jamaica
@@ -140,12 +152,16 @@ class FacebookAgent(BasicAgent):
 
 			bsa = BasicSearchAlgorithm()
 			try:
-				title = data_obj.get('title',None)
-				reports = bsa.do_search(search_text = data_description, title = title)	#do search returns an array
+				title = data_obj.get('title',data_description)
+				if title and len(title) > 100:
+					title = title[:100] + "..."
+
+				reports = bsa.do_search(search_text = data_description, title = title, raw_data = raw_data)	#do search returns an array
 				if reports:
 					all_reports.extend(reports)
 			except KeyError as e:
-				print 'no description in raw_data #%s - %s\n' % (raw_data.id, raw_data.data)
+				#print 'no description in raw_data #%s - %s\n' % (raw_data.id, raw_data.data)
+				pass
 					
 
 class RssAgent(BasicAgent):
@@ -170,11 +186,11 @@ class GoogleReaderAgent(BasicAgent):
 			try:
 				search_text = raw_data.data
 				title = raw_data.title
-				reports = bsa.do_search(search_text = search_text, title = title)	#do search returns an array
+				reports = bsa.do_search(search_text = search_text, title = title, raw_data = raw_data)	#do search returns an array
 				if reports:
 					all_reports.extend(reports)
 			except KeyError as e:
-				print e
+				#print e
 				pass
 
 

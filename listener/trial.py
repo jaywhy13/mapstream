@@ -15,10 +15,12 @@ from django.contrib.gis.utils import LayerMapping
 
 """ Test the Google Reader functionality """
 def runGR():
-    ds = DataSource.objects.all()[3] # get the last data source
+    ds = DataSource.objects.get(src_id='mapstreamreader@gmail.com')
     gr = GoogleReaderLoader(ds)
     print "calling load on google reader feed"
     gr.load()
+
+
 
 
 """ Test the basic search algorithm """

@@ -1,15 +1,24 @@
 import urllib2
 #import libxml2dom
 import json
+import re
+import datetime
+from dateutil import parser
+from BeautifulSoup import BeautifulSoup
+
 from mapstream2.listener.models import RawData, DataTag, DataSource, DataSourceType
-from mapstream2.sherlock.search import FacebookAgent
+from mapstream2.sherlock.search import FacebookAgent, GoogleReaderAgent
 from mapstream2.listener.greader.googlereader import *
 from mapstream2.listener.greader.url import *
 from mapstream2.listener.greader.items import *
 from mapstream2.listener.greader.auth import *
 
+
+
 import feedparser
 import leaf
+
+
 
 class Loader():
 	source_type = None
@@ -76,22 +85,41 @@ class FacebookLoader(Loader):
 				fblinktype = data.get('type',None)
 				new_data = RawData()
 				title = data.get('name',data['id'])
+				created_at = data.get('created_time',str(datetime.datetime.now()))
+
 				if fblinktype:
 					if fblinktype == "link" and data.get('description',None):
-						title = data.get('description')[:30] + '...'
+						title = data.get('description')
 					elif data.get('message',None):
-						title = data.get('message')[:30] + '...'
+						title = data.get('message')
+
+				if len(title) > 100:
+					title = title[:100] + "..."
 
 				new_data.title = title
 				new_data.data_id = data['id']
 				new_data.source = self.data_src
 				new_data.data = json.dumps(data)
-				new_data.save()
-				new_data.tags.add(new_tag)
-				new_data.save()
-				new_datas.append(new_data)
-			fba = FacebookAgent()
-			fba.search(raw_data_set = new_datas)
+				new_data.link = data.get('link',None)
+
+				# try and parse the date
+				try:
+					dt = parser.parse(created_at)
+				except ValueError:
+					dt = datetime.datetime.now()
+
+				new_data.occurred_at = dt
+				
+				# make sure that the raw data does not exist
+				if not new_data.exists():
+					new_data.save()
+					new_data.tags.add(new_tag)
+					new_data.save()
+					new_datas.append(new_data)
+
+			if new_datas:
+				fba = FacebookAgent()
+				fba.search(raw_data_set = new_datas)
 		# except HttpError:
 		# 	print 'Seems like the token has expired ... fetch a new one'
 	
@@ -117,8 +145,6 @@ class GoogleReaderLoader(Loader):
 		self.psw = self.parameters.get('password','choirpassword')
 		self.article_css_selector = self.parameters.get('article-css-selector','')
 		self.fetch_limit = self.parameters.get('fetch-limit',50)
-
-
 
 
 	def load(self, store_data = True):
@@ -172,24 +198,36 @@ class GoogleReaderLoader(Loader):
 						new_data = RawData()
 						new_data.title = title
 						new_data.source = self.source_node
-						new_data.data = article_html
+						new_data.data = strip_tags(article_html)
 						new_data.data_id = item.id
-						new_data.save()
-						new_data.tags.add(new_tag)
-						new_datas.append(new_data)
-						read_items.append(item)
-						fetch_count +=1
+						new_data.link = item.url
 
-				print
+						try:
+							new_data.occurred_at = datetime.datetime.fromtimestamp(feed.lastUpdated)
+						except ValueError:
+							print "Error, could not parse timestamp: %s" % feed.lastUpdated
+							new_data.occurred_at = datetime.datetime.now()
+
+							
+						# if it is not new... save it
+						if not new_data.exists():
+							new_data.save()
+							new_data.tags.add(new_tag)
+							new_datas.append(new_data)
+							fetch_count +=1
+
+						read_items.append(item)
+
+
 				print "All done.\n %s items fetched, our limit is %s. There are %s feeds. We stopped at index %s" % (fetch_count, self.fetch_limit, len(feed.items),index)
 
+			if new_datas:
+				gra = GoogleReaderAgent()
+				gra.search(raw_data_set = new_datas)
 			return new_datas
 		return None
 				
 	
-
-
-
 class RssLoader(Loader):
 
 	def __init__(self, data_src):
@@ -215,3 +253,8 @@ class RssLoader(Loader):
 	def load(self, store_data = True):
 		self.fetch_data()
 	
+
+
+def strip_tags(str):
+	return ''.join(BeautifulSoup(str).findAll(text=True))
+

@@ -17,6 +17,7 @@ class DataSourceType(models.Model):
 	"""This is the basic type of a data source: RSS, Twitter, Facebook etc"""
 	name = models.CharField(max_length=50)
 	description = models.TextField(max_length=255, blank=True, null=True)
+	loader_class = models.CharField(max_length=255, blank=True,null=True)
 
 	def __unicode__(self):
 		return u"%s" % self.name
@@ -43,7 +44,7 @@ class DataSource(models.Model):
 	src_type = models.ForeignKey("DataSourceType")
 	src_id = models.TextField(max_length=500)		# the string tht uniquely id's this source (eg a username/id)
 	description = models.TextField(max_length=500, blank=True, null=True)
-	date_added = models.DateTimeField(default=datetime.datetime.now())
+	date_added = models.DateTimeField(default=datetime.datetime.now)
 	state = models.ForeignKey("DataSourceStatus")
 	time_last_active = models.DateTimeField(blank=True, null=True)
 	parameters = models.ManyToManyField("DataSourceParameter",blank=True,null=True)
@@ -65,9 +66,10 @@ class RawData(models.Model):
 	source = models.ForeignKey("DataSource")
 	data = models.TextField(blank=True, null=True)
 	data_id = models.CharField(max_length=255,blank=True,null=True)
-	time_added = models.DateTimeField(default=datetime.datetime.now())
-	time_created = models.DateTimeField(default=datetime.datetime.now())
+	occurred_at = models.DateTimeField(default=datetime.datetime.now)
+	created_at = models.DateTimeField(default=datetime.datetime.now)
 	tags = models.ManyToManyField("DataTag")
+	link = models.URLField(max_length=255,blank=True,null=True)
 	# metadata column ---> more info
 
 	""" add a raw_text column to replace data. Let data remain as a searchable column
@@ -77,4 +79,6 @@ class RawData(models.Model):
 		return u"%s (%s)" % (self.title, self.source)
 
 
+	def exists(self):
+		return RawData.objects.filter(occurred_at = self.occurred_at, title = self.title).count() > 0
 
