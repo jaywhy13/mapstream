@@ -57,9 +57,12 @@ class EventReport(models.Model):
 	title = models.CharField(max_length=255)
 	event_type = models.ForeignKey("EventType", blank=True, null=True)
 	made_by = models.ForeignKey(User)		# user making the report (incl. system users)
-	time_of_report = models.DateTimeField(default=datetime.datetime.now())
+	time_of_report = models.DateTimeField(default=datetime.datetime.now)
+	occurred_at = models.DateTimeField(default=datetime.datetime.now) # the time of the actual event
 	confidence = models.FloatField()	# a percentage ... so 1.0 is 100%
 	location = models.PointField(default='POINT(0 0)')
+	link = models.URLField(max_length=255,blank=True,null=True)
+
 	# eventually reports may contain pictures, audio and even video
 
 	def get_matching_events(self):
@@ -75,6 +78,9 @@ class EventReport(models.Model):
 				print "No location information available for: %s" % event
 					
 		return result
+
+	def exists(self):
+		return EventReport.objects.filter(title = self.title, occurred_at = self.occurred_at).count() > 0
 				
 	def has_matching_events(self):
 		return len(self.get_matching_events()) > 0
@@ -98,9 +104,9 @@ class EventType(models.Model):
 	def has_report_threshold(self):
 		return self.time_threshold > 0
 	
+
 	def __unicode__(self):
 		return self.name
-
 
 class EventStatus(models.Model):
 	name = models.CharField(max_length=255)
@@ -118,23 +124,32 @@ class Event(models.Model):
 	name = models.CharField(max_length=255)
 	description = models.TextField(max_length=500, blank=True, null=True)
 	event_type = models.ForeignKey("EventType")
-	time_created = models.DateTimeField()
+	# signable
 	created_by = models.ForeignKey(User)
-	updated_at = models.DateTimeField(default=datetime.datetime.now())
+	
+	# timestampable
+	created_at = models.DateTimeField(default=datetime.datetime.now)
+ 	updated_at = models.DateTimeField(default=datetime.datetime.now)
+
+	# when?
+	occurred_at = models.DateTimeField(default=datetime.datetime.now)
+
 	status = models.ForeignKey("EventStatus")	# things like: confirmed_by_vote, unconfirmed, invalidated_by_editor etc
 	reports = models.ManyToManyField("EventReport")
 	votes = models.ManyToManyField("Vote", blank=True)	# user votes on event validity
 	location = models.PointField(default='POINT(0 0)')	# location - this is a geo_object (can be a point, a polygon etc)
+	link = models.URLField(max_length=255,blank=True,null=True)
+
 
 	def __unicode__(self):
 		return self.name
 	
 	def is_open(self):
 		hr_before = datetime.datetime.now() - datetime.timedelta(hours=1)
-		return self.time_created > hr_before
+		return self.created_at > hr_before
 
 	def get_location(self):
-		# just return the event location for now
+		# just return (0,0) for now
 		lat = 0.0
 		lon = 0.0
 		return (lat, lon)
@@ -142,7 +157,7 @@ class Event(models.Model):
 	@staticmethod
 	def get_open_events():
 		hr_before = datetime.datetime.now() - datetime.timedelta(hours=1)
-		return Event.objects.filter(time_created__gt=hr_before)
+		return Event.objects.filter(created_at__gt=hr_before)
 
 	@staticmethod
 	def event_from_report(report):
@@ -160,6 +175,14 @@ class UserProfile(models.Model):
 def _random_key():
 	return ''.join(random.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for x in range(30))
 
+class SecureViewParameter(models.Model):
+	keyword = models.CharField(max_length=255)
+	value = models.TextField(max_length=500, blank=True, null=True)
+
+	def __unicode__(self):
+		return u"%s: %s" % (self.keyword, self.value)
+
+
 class SecureView(models.Model):
 	key = models.CharField(max_length=255, unique=True, default=_random_key)
 	url = models.CharField(max_length=500)
@@ -172,12 +195,6 @@ class SecureView(models.Model):
 	def view_parameters(self):
 		return u', '.join(["%s" % param for param in self.parameters.all()])
 
-class SecureViewParameter(models.Model):
-	keyword = models.CharField(max_length=255)
-	value = models.TextField(max_length=500, blank=True, null=True)
-
-	def __unicode__(self):
-		return u"%s: %s" % (self.keyword, self.value)
 
 
 
@@ -190,30 +207,32 @@ class GeoLocation(models.Model):
 @receiver(post_save, sender=EventReport, dispatch_uid="stream.event_report_created")
 def event_report_created(sender, instance, created, **kwargs):
 	# first check to see if the event has already been reported
-	print "  ** Trigger called... post save report"
+	#print "  ** Trigger called... post save report"
 	if instance.has_matching_events():
-		print " >> This event already has matching events. Will update number of reports for this event..."
+		#print " >> This event already has matching events. Will update number of reports for this event..."
 		for event in instance.get_matching_events():
 			event.reports.add(instance)
-			event.updated_at = datetime.datetime.now()
+			#event.updated_at = datetime.datetime.now()
 			event.save()
 	else:
-		print "  ** An event (%s) has been reported!!" % instance
+		#print "  ** An event (%s) has been reported!!" % instance
 		# create a new event here
 		location_name = "(location to be determined)"
 		new_event = Event()
 		new_event.name = "%s happening at %s" % (instance.event_type, location_name)
 		new_event.name = instance.title
 		new_event.event_type = instance.event_type
-		new_event.time_created = instance.time_of_report
+		new_event.created_at = instance.time_of_report
 		new_event.status = EventStatus.objects.get(name="Unconfirmed")
 		new_event.created_by = User.objects.get(username="system")
+		new_event.updated_by = User.objects.get(username="system")
 		new_event.location = instance.location
+		new_event.occurred_at = instance.occurred_at
+		new_event.link = instance.link
 		new_event.save()	# have to call save before trying to add the reports as it is a M2M relationship
 		new_event.reports.add(instance)
 		new_event.save()
-		print " >> New event created"
-	print
+		#print " >> New event created"
 
 
 

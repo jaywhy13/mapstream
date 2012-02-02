@@ -16,8 +16,8 @@ class DataSourceAdmin(admin.ModelAdmin):
 	list_filter = ("src_type", "state")
 
 class RawDataAdmin(admin.ModelAdmin):
-	list_display = ('title', 'source', 'time_added')
-	list_filter = ("source", "time_added", "tags")
+	list_display = ('title', 'source', 'created_at','occurred_at','link')
+	list_filter = ("source", "created_at","occurred_at", "tags")
 	search_fields = ('title', 'data')
 
 

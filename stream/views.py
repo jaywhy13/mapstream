@@ -103,7 +103,9 @@ def _list_event(request, objectId, secure_params=None):
 	else:
 		if 'ts' in request.GET and request.GET['ts']:
 			try:
+				print "timestamp sting is %s" % request.GET['ts']
 				time_stamp = datetime.datetime.fromtimestamp(float(request.GET['ts']))
+				print "we got timestamp: %s" % (time_stamp)
 				events = Event.objects.filter(updated_at__gte=time_stamp)
 			except ValueError:
 				events = Event.objects.all()

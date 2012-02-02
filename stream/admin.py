@@ -6,7 +6,7 @@ class TagAdmin(admin.ModelAdmin):
 	list_display = ('name',)
 
 class EventAdmin(geo_admin.GeoModelAdmin):
-	list_display = ('name', 'description', 'event_type' , 'time_created', 'status')
+	list_display = ('name', 'description', 'event_type' , 'created_at', 'status','occurred_at','location')
 	list_filter = ('status',)
 
 class EventTypeAdmin(admin.ModelAdmin):
@@ -22,7 +22,7 @@ class SettlementGeoDataAdmin(geo_admin.GeoModelAdmin):
 	ordering = ('community',)
 
 class EventReportAdmin(geo_admin.GeoModelAdmin):
-	list_display = ('title', 'made_by', 'time_of_report', 'location',)
+	list_display = ('title', 'made_by', 'time_of_report','occurred_at', 'location',)
 	list_filter = ('time_of_report',)
 	search_fields = ('title',)
 

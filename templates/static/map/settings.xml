@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings>
+	<services>
+		<geodata url="http://10.0.40.140:8000/data/Iy3lqwMfdGFdCRE0GHL29N652eatJn/"/>
+		<geodataLocal url="http://localhost/mapstream/service.php"/>
+		<settings url="http://10.0.40.140:8000/data/t5ldRkSKpoIYje5l4uQjoTNt7F3fd0/"/>
+	</services>
+	<system 
+		clusteringEnabled="true" 
+		autoloadOnLevelChange="false" 
+		pollServer="true" 
+		pollDuration="15000" 
+		summarizePointCluster="false" >
+	</system>
+	<map key="ABQIAAAAh39_nbRZVLvak9Y-RpUi2xTYRspYS7D1MNRGZKiX_clOMaUYoxQkLPikKc5mDCdtfgFBHAlY3DUpeg" sensor="false">
+	</map>
+</settings>
