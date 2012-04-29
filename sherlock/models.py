@@ -39,6 +39,18 @@ class Word(models.Model):
 		result.extend(finite_forms)
 		return result
 
+
+	@staticmethod
+	def get_word_chain(text):
+		list = Word.get_all_word_forms(text) # all finite forms
+		all = list
+		for str in list:
+			word = Word.get_word(str)
+			similar = [ w.root for w in word.similar_words.all() if w.root not in all and w.root != text ]
+			finite_forms = [ w.root for w in word.finite_forms.all() if w.root not in all and w.root != text ]
+			all.extend(similar)
+			all.extend(finite_forms)
+		return all
 	
 	@staticmethod
 	def get_all_word_forms(text):
