@@ -6,13 +6,12 @@ import datetime
 from dateutil import parser
 from BeautifulSoup import BeautifulSoup
 
-from mapstream2.listener.models import RawData, DataTag, DataSource, DataSourceType
-from mapstream2.sherlock.search import FacebookAgent, GoogleReaderAgent
-from mapstream2.listener.greader.googlereader import *
-from mapstream2.listener.greader.url import *
-from mapstream2.listener.greader.items import *
-from mapstream2.listener.greader.auth import *
-
+from listener.models import RawData, DataTag, DataSource, DataSourceType
+from sherlock.search import FacebookAgent, GoogleReaderAgent
+from listener.greader.googlereader import *
+from listener.greader.url import *
+from listener.greader.items import *
+from listener.greader.auth import *
 
 
 import feedparser
@@ -100,7 +99,11 @@ class FacebookLoader(Loader):
 				new_data.data_id = data['id']
 				new_data.source = self.data_src
 				new_data.data = json.dumps(data)
-				new_data.link = data.get('link',None)
+				actions = data.get('actions', None)
+				if actions:
+					new_data.link = actions[0].get('link', None)
+				else:
+					print "we have no actions!!?"
 
 				# try and parse the date
 				try:
@@ -120,6 +123,8 @@ class FacebookLoader(Loader):
 			if new_datas:
 				fba = FacebookAgent()
 				fba.search(raw_data_set = new_datas)
+			else:
+				print "not getting any new data"
 		# except HttpError:
 		# 	print 'Seems like the token has expired ... fetch a new one'
 	
@@ -147,7 +152,7 @@ class GoogleReaderLoader(Loader):
 		self.fetch_limit = self.parameters.get('fetch-limit',50)
 
 
-	def load(self, store_data = True):
+	def load(self, store_data = True, date_limit=None):
 		print "Connecting as %s" % self.username
 		auth = ClientAuthMethod(self.username,self.psw)
 		
@@ -207,6 +212,17 @@ class GoogleReaderLoader(Loader):
 						except ValueError:
 							print "Error, could not parse timestamp: %s" % feed.lastUpdated
 							new_data.occurred_at = datetime.datetime.now()
+
+						# patching in date limit thing Parris wanted --------------------------
+						# if date_limit is None:
+						#	date_limit = datetime.date.today() - datetime.timedelta(week=1)
+						#
+						# if new_data.occured_at < date_limit:
+						# 	# we should skip this item .... it is too old
+						# 	continue
+						#
+						# end patch -----------------------------------------------------------
+						# Abandonning this idea for now ... I think it's best to patch the map view and not mess with this for now
 
 							
 						# if it is not new... save it
