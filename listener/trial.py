@@ -1,28 +1,34 @@
 import os
 
-from mapstream2.listener.models import *
-from mapstream2.sherlock.models import *
-from mapstream2.stream.models import *
-from mapstream2.listener.loader import *
-from mapstream2.sherlock.search import *
-from mapstream2.listener.greader.googlereader import *
-from mapstream2.listener.greader.url import *
-from mapstream2.listener.greader.items import *
-from mapstream2.listener.greader.auth import *
-from mapstream2.listener.tasks import *
+from listener.models import *
+from sherlock.models import *
+from stream.models import *
+from listener.loader import *
+from sherlock.search import *
+from listener.greader.googlereader import *
+from listener.greader.url import *
+from listener.greader.items import *
+from listener.greader.auth import *
+from listener.tasks import *
 from django.contrib.gis.utils import LayerMapping
 
 
 """ Test the Google Reader functionality """
 def runGR():
-    ds = DataSource.objects.get(src_id='mapstreamreader@gmail.com')
-    gr = GoogleReaderLoader(ds)
-    print "calling load on google reader feed"
-    gr.load()
-
-
-
-
+    print "Running Google Reader Loader Task"
+    grtype = DataSourceType.objects.get(name='GoogleReader')
+    active = DataSourceStatus.objects.get(name='Available')
+    data_source_set = DataSource.objects.filter(src_type=grtype,state=active)
+    
+    for gr_data_source in data_source_set:
+        if gr_data_source:
+            print "Loading content from Google Reader source: %s" % gr_data_source.description
+            grl = GoogleReaderLoader(data_src=gr_data_source)
+            new_datas = grl.load()
+            gra = GoogleReaderAgent()
+            gra.search(new_datas)
+            
+            
 """ Test the basic search algorithm """
 def runBSA(search_text='A man was found dead on Trafalgar Rd',title='Man found dead on Trafalgar'):
     print "Running basic search algorithm"
@@ -74,5 +80,25 @@ def importRoads(shpFileLocation):
         
         lm = LayerMapping(Road,shpFileLocation,road_mapping,transform=False,encoding='iso-8859-1')
         lm.save(strict=True,verbose=True)
+    else:
+        print "%s does not exist!" % shpFileLocation
+
+
+def importSettlements(shpFileLocation):
+    if os.path.exists(shpFileLocation):
+        geo_mapping = {
+            'community' : 'COMMUNITY',
+            'parish' : 'PARISH',
+            'pop1991_field' : 'POP1991_',
+            'pop2001_field' : 'POP2001_',
+            'area' : 'AREA',
+            'perimeter' : 'PERIMETER',
+            'acres' : 'ACRES',
+            'hectares' : 'HECTARES',
+            'area_sqkm' : 'Area_sqkm',
+            'geom' : 'MULTIPOLYGON',
+        }
+        lm = LayerMapping(GeoObject, shpFileLocation, geo_mapping, transform=False, encoding='iso-8859-1')
+        lm.save(strict=True, verbose=True)
     else:
         print "%s does not exist!" % shpFileLocation
