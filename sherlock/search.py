@@ -1,6 +1,6 @@
-from mapstream2.listener.models import RawData, DataTag, DataSource, DataSourceType, DataSourceStatus
-from mapstream2.stream.models import EventReport, EventType, GeoLocation
-from mapstream2.sherlock.models import *
+from listener.models import RawData, DataTag, DataSource, DataSourceType, DataSourceStatus
+from stream.models import EventReport, EventType, GeoLocation
+from sherlock.models import *
 from django.contrib.auth.models import User
 
 
@@ -45,7 +45,8 @@ class BasicSearchAlgorithm():
 						for event_type in event_types:
 							# print "    Searching for event type: %s (keyword=%s)" % (event_type,event_type.keyword)
 							if event_type.keyword:
-								words = Word.get_all_word_forms(event_type.keyword)
+								#words = Word.get_all_word_forms(event_type.keyword)
+								words = Word.get_word_chain(event_type.keyword) # use word chain instead
 								# print "     - Will search in %s" % [word for word in words]
 								for word in words:
 									# print "     Searching text for %s" % word
@@ -53,11 +54,7 @@ class BasicSearchAlgorithm():
 										print " ++ Matched word: %s in %s" % (word,geotitle)
 										report = self._create_event_report()
 										if title:
-											if geotitle not in title:
-												title = title + " (" + geotitle + ")"
-											report.title = title
-
-
+											report.title = title + " (" + geotitle + ")"
 										report.event_type = event_type
 										report.location = model.geom.centroid
 										if raw_data:
@@ -125,6 +122,7 @@ class FacebookAgent(BasicAgent):
 
 	def search(self, raw_data_set=None):
 		"""Searches a collection of RawData with terms provided by the query array"""
+		print "Searching facebook raw data"
 		new_tag = DataTag.objects.get(name='new')
 		
 		fb_data_source_type = DataSourceType.objects.get(name='Facebook')
@@ -152,10 +150,7 @@ class FacebookAgent(BasicAgent):
 
 			bsa = BasicSearchAlgorithm()
 			try:
-				title = data_obj.get('title',data_description)
-				if title and len(title) > 100:
-					title = title[:100] + "..."
-
+				title = data_obj.get('title', raw_data.title)
 				reports = bsa.do_search(search_text = data_description, title = title, raw_data = raw_data)	#do search returns an array
 				if reports:
 					all_reports.extend(reports)
