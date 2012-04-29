@@ -1,15 +1,15 @@
-from mapstream2.stream.forms import ReportEventForm
+from stream.forms import ReportEventForm
 from django.shortcuts import render_to_response
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core import serializers
 from django.core.context_processors import csrf
 from django.core.urlresolvers import resolve
-from mapstream2.stream.models import EventReport, EventType, Event, SecureView
+from stream.models import EventReport, EventType, Event, SecureView
 from django.contrib.auth.models import User
 import json, time, datetime
 
 def home(request):
-	response = "Mapstream Server II v0.1"
+	response = "Mapstream Server II v0.1 (Staging Area)"
 	return HttpResponse(response)
 
 
@@ -86,6 +86,12 @@ def _list_event(request, objectId, secure_params=None):
 		format = parameters['format']
 	else:
 		format = 'display'	# display means ordinary json for now
+
+	if 'date_limit' in parameters and parameters['date_limit']:
+		date_limit = parameters['date_limit']	# this WONT WORK ... we'll need to parse some stuff ... just patching for now
+	else:
+		# for now we should always be getting here ... as the date_limit param is not yet passed
+		date_limit = datetime.date.today() - datetime.timedelta(weeks=1)	# event occured within a week of today
 	
 	if objectId:
 		try:
@@ -104,12 +110,14 @@ def _list_event(request, objectId, secure_params=None):
 		if 'ts' in request.GET and request.GET['ts']:
 			try:
 				time_stamp = datetime.datetime.fromtimestamp(float(request.GET['ts']))
-				events = Event.objects.filter(updated_at__gte=time_stamp)
+				# PATCH!! ... only show the events that have occured before the 'date_limit'
+				events = Event.objects.filter(updated_at__gte=time_stamp, occurred_at__gte=date_limit)
 			except ValueError as e:
 				#print "We have a value error"
 				events = [] #Event.objects.all()
 		else:
-			events = Event.objects.all()
+			# events = Event.objects.all()
+			events = Event.objects.filter(occurred_at__gte=date_limit)
 		if format == 'map':
 			event_json = _prepare_map_json(request, events, secure_params)
 		else:
@@ -129,6 +137,8 @@ def _prepare_map_json(request, events, secure_params=None):
 		map_event['Longitude'] = '%s' % event.location.coords[0]
 		map_event['Latitude'] = '%s' % event.location.coords[1]
 		map_event['layer_id'] = event.event_type.id
+		map_event['report_links'] = [report.link for report in event.reports.all()]
+		map_event['event_time'] = event.occurred_at.strftime('%a %b %d, %Y at %I:%M %p')
 		results.append(map_event)
 	map_result = {
 		"timestamp": time.time(),
