@@ -15,6 +15,7 @@ from django.contrib.gis.utils import LayerMapping
 
 """ Test the Google Reader functionality """
 def runGR():
+
     print "Running Google Reader Loader Task"
     grtype = DataSourceType.objects.get(name='GoogleReader')
     active = DataSourceStatus.objects.get(name='Available')
@@ -27,8 +28,7 @@ def runGR():
             new_datas = grl.load()
             gra = GoogleReaderAgent()
             gra.search(new_datas)
-            
-            
+
 """ Test the basic search algorithm """
 def runBSA(search_text='A man was found dead on Trafalgar Rd',title='Man found dead on Trafalgar'):
     print "Running basic search algorithm"

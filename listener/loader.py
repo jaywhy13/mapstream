@@ -14,6 +14,7 @@ from listener.greader.items import *
 from listener.greader.auth import *
 
 
+
 import feedparser
 import leaf
 
@@ -99,11 +100,7 @@ class FacebookLoader(Loader):
 				new_data.data_id = data['id']
 				new_data.source = self.data_src
 				new_data.data = json.dumps(data)
-				actions = data.get('actions', None)
-				if actions:
-					new_data.link = actions[0].get('link', None)
-				else:
-					print "we have no actions!!?"
+				new_data.link = data.get('link',None)
 
 				# try and parse the date
 				try:
@@ -123,8 +120,6 @@ class FacebookLoader(Loader):
 			if new_datas:
 				fba = FacebookAgent()
 				fba.search(raw_data_set = new_datas)
-			else:
-				print "not getting any new data"
 		# except HttpError:
 		# 	print 'Seems like the token has expired ... fetch a new one'
 	

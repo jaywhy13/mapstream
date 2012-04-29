@@ -4,14 +4,24 @@
 		<geodata url="http://10.0.40.105/mapstream/data/O4j3khPT5wDZDBfRPKKaxyfgN3WfIM/"/>
 		<geodataLocal url="http://localhost/mapstream/service.php"/>
 		<settings url="http://10.0.40.105/mapstream/data/VsMhbbhZGYe2xSTDrY3jcff8kXdHvy/"/>
+
+		<!--
+		<geodata url="http://10.0.40.140:8000/data/Iy3lqwMfdGFdCRE0GHL29N652eatJn/"/>
+		<geodataLocal url="http://localhost/mapstream/service.php"/>
+		<settings url="http://10.0.40.140:8000/data/t5ldRkSKpoIYje5l4uQjoTNt7F3fd0/"/>
+		-->
+
 	</services>
 	<system 
 		clusteringEnabled="true" 
 		autoloadOnLevelChange="false" 
 		pollServer="true" 
-		pollDuration="10000" 
+		pollDuration="15000" 
 		summarizePointCluster="false" >
 	</system>
 	<map key="ABQIAAAAMda0uEYrCBrNRN3G_WoZZxQIt3lmc1LyzdyiLoZ195pmyJc3ShTusy04-cXua2ZO8FYI9sshTTDLKA" sensor="false">
+	<!-- <map key="ABQIAAAAh39_nbRZVLvak9Y-RpUi2xTYRspYS7D1MNRGZKiX_clOMaUYoxQkLPikKc5mDCdtfgFBHAlY3DUpeg" sensor="false">
+	-->
+
 	</map>
 </settings>

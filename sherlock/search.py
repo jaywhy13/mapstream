@@ -151,6 +151,7 @@ class FacebookAgent(BasicAgent):
 			bsa = BasicSearchAlgorithm()
 			try:
 				title = data_obj.get('title', raw_data.title)
+				# title = data_obj.get('title',None) # not sure if we neeed this
 				reports = bsa.do_search(search_text = data_description, title = title, raw_data = raw_data)	#do search returns an array
 				if reports:
 					all_reports.extend(reports)

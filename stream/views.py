@@ -181,4 +181,7 @@ def get_map_settings(request, secure_params=None):
 		"level": level_list,
 	}
 	settings_json = json.dumps(settings, indent=4 if pretty else None, sort_keys=pretty)
+
 	return HttpResponse(settings_json, content_type='application/json')
+
+
