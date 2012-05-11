@@ -5,6 +5,7 @@ import re
 import datetime
 from dateutil import parser
 from BeautifulSoup import BeautifulSoup
+from urlparse import urlparse
 
 from listener.models import RawData, DataTag, DataSource, DataSourceType
 from sherlock.search import FacebookAgent, GoogleReaderAgent
@@ -17,7 +18,6 @@ from listener.greader.auth import *
 
 import feedparser
 import leaf
-
 
 
 class Loader():
@@ -62,7 +62,6 @@ class FacebookLoader(Loader):
 
 	def load(self, store_data=True):
 		self.load_feed(store_data)
-		
 
 	
 	def load_feed(self, store_data=True):
@@ -135,7 +134,7 @@ class GoogleReaderLoader(Loader):
 	def __init__(self, data_src):
 		self.url = data_src.src_id
 		self.source_node = data_src
-		self.parameters = data_src.getParameters()
+		self.parameters = data_src.get_parameters()
 
 		# set the src type
 		self.source_type = DataSourceType.objects.get(name='GoogleReader')
@@ -265,7 +264,77 @@ class RssLoader(Loader):
 		self.fetch_data()
 	
 
+class SiteLinkLoader(Loader):
+	"""This class works by supplying a url for the data source id, and adding two prime 
+	parameters. article-link-selector - this is is a css selector string that tells the 
+	loader where to get the a (href) links for articles. The article-css-selector is a 
+	selector that tells us what css selection we should use once we get to the site to 
+	get the article content. Note that if multiple elements are returned for the 
+	article css selection, we'll parse them all and add them to the content for the 
+	article. We also create and save raw data items. 
+	"""
+	@staticmethod
+	def get_elements_by_css(url, css_selector):
+		f = urllib.urlopen(url)
+		html = f.read()
+		if html:
+			doc = leaf.parse(html)
+			elements = doc(css_selector)
+			return elements
+		return []
+	
+	def __init__(self, data_src):
+		self.url = data_src.src_id
+		self.source_node = data_src
+		self.parameters = data_src.get_parameters()
+
+		# set the src type
+		self.source_type = DataSourceType.objects.get(name='SiteLinkLoader')
+		
+		# check for crucial parameters
+		self.article_link_selector = self.parameters.get('article-link-selector','')
+		self.article_css_selector = self.parameters.get('article-css-selector','')
+		self.fetch_limit = self.parameters.get('fetch-limit',50)
+		self.hostname = urlparse.urlparse(self.url).hostname
+
+	def load(self, store_data=True):
+		if not self.article_css_selector or not self.article_link_selector:
+			print "No CSS selector information supplied, cannot load"
+			return None
+
+		article_links = SiteLinkLoader.get_elements_by_css(self.url, self.article_link_selector)
+		if article_links:
+			for article_link in article_links:
+				article_title = strip_tags(article_link.html())
+				article_url = article_link.href
+				if article_url.startswith('/'):
+					article_url = article_url[1:] # get rid of the starting slash
+				if not article_url.lower().startswith('http://') and not article_url.lower().startswith(self.hostname):
+					article_url = 'http://%s/%s' % (self.hostname, article_url)
+					article_content = ""
+					article_pieces = SiteLinkLoader.get_elements_by_css(article_url, self.article_css_selector)
+					for article_piece in article_pieces:
+						article_content += strip_tags(article_piece.html())
+
+					# create a new raw data if none exists
+					similar_raw_datas = RawData.objects.filter(title=article_title)
+					if not similar_raw_datas:
+						print " + Saving article: %s" % article_title
+						new_data = RawData()
+						new_data.title = article_title
+						new_data.data = article_content
+						new_data.link = article_url
+						new_data.source = self.source_node
+						new_data.data_id = article_url
+						# save it
+						new_data.save()
+						
+		else:
+			print "We got no elements :( %s" % html
+
 
 def strip_tags(str):
+	"""strips all html tags from a string using beautiful soup
+	"""
 	return ''.join(BeautifulSoup(str).findAll(text=True))
 

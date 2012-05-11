@@ -3,7 +3,7 @@ from celery.task import Task
 from celery.registry import tasks
 
 # custom imports
-from listener.loader import FacebookLoader
+from listener.loader import *
 from listener.models import DataSource, DataSourceType, DataSourceStatus, RawData
 from stream.models import Event,EventReport
 
@@ -15,6 +15,26 @@ class SampleTask(Task):
 
     def run(self, x,y):
         return x + y
+
+class SiteLinkLoaderTask(Task):
+    
+    name = "slltask"
+
+    def run(self):
+        print "Running Site Link Loader Task"
+        slltype = DataSourceType.objects.get(name='SiteLinkLoader')
+        active = DataSourceStatus.objects.get(name='Available')
+        data_source_set = DataSource.objects.filter(src_type=slltype,state=active)
+        
+        for sll_data_source in data_source_set:
+            if sll_data_source:
+                print "Loading content from site: %s" % sll_data_source.description
+                sll = SiteLinkLoader(data_src=sll_data_source)
+                sll.load()
+            else:
+                print "We found an empty source"
+
+
 
 class FacebookLoaderTask(Task):
 
@@ -89,6 +109,7 @@ tasks.register(SampleTask)
 tasks.register(FacebookLoaderTask)
 tasks.register(GoogleReaderLoaderTask)
 tasks.register(PurgeAllTask)
+tasks.register(SiteLinkLoaderTask)
 
 @task()
 def add(x,y):
