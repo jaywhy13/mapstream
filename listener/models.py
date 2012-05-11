@@ -49,7 +49,7 @@ class DataSource(models.Model):
 	time_last_active = models.DateTimeField(blank=True, null=True)
 	parameters = models.ManyToManyField("DataSourceParameter",blank=True,null=True)
 
-	def getParameters(self):
+	def get_parameters(self):
 		dict = {}
 		for parameter in self.parameters.all():
 			dict[parameter.name] = parameter.value
