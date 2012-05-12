@@ -8,7 +8,7 @@ from BeautifulSoup import BeautifulSoup
 from urlparse import urlparse
 
 from listener.models import RawData, DataTag, DataSource, DataSourceType
-from sherlock.search import FacebookAgent, GoogleReaderAgent
+from sherlock.search import FacebookAgent, GoogleReaderAgent, BasicAgent
 from listener.greader.googlereader import *
 from listener.greader.url import *
 from listener.greader.items import *
@@ -80,6 +80,11 @@ class FacebookLoader(Loader):
 			# store the data in the raw_data model
 			new_tag = DataTag.objects.get(name='new')
 			new_datas = []
+
+			unprocessed_datas = RawData.objects.filter(source=self.source_node, tags__in=[new_tag])
+			if unprocessed_datas:
+				new_datas.extend(unprocessed_datas)
+
 			for data in json_obj['data']:
 				fblinktype = data.get('type',None)
 				new_data = RawData()
@@ -155,6 +160,11 @@ class GoogleReaderLoader(Loader):
 			feeds = reader.getSubscriptionList()
 			new_tag = DataTag.objects.get(name='new')
 			new_datas = []
+
+			unprocessed_datas = RawData.objects.filter(source=self.source_node, tags__in=[new_tag])
+			if unprocessed_datas:
+				new_datas.extend(unprocessed_datas)
+
 			fetch_count = 0
 
 			# loop through and store feeds we already have RawData for
@@ -303,6 +313,14 @@ class SiteLinkLoader(Loader):
 			return None
 
 		article_links = SiteLinkLoader.get_elements_by_css(self.url, self.article_link_selector)
+		new_tags = DataTag.objects.filter(name='new')
+		new_tag = DataTag.objects.get(name='new')
+		# get all the new data objects 
+		new_datas = []
+		unprocessed_datas = RawData.objects.filter(source=self.source_node, tags__in=new_tags)
+		if unprocessed_datas:
+			new_datas.extend(unprocessed_datas)
+
 		if article_links:
 			for article_link in article_links:
 				article_title = strip_tags(article_link.html())
@@ -326,9 +344,17 @@ class SiteLinkLoader(Loader):
 						new_data.link = article_url
 						new_data.source = self.source_node
 						new_data.data_id = article_url
-						# save it
-						new_data.save()
-						
+						if store_data:
+							# save it
+							new_data.save()
+							new_data.tags.add(new_tag)
+							new_data.save()
+						new_datas.append(new_data)
+					else:
+						print " - Skipping already saved article: %s" % article_title
+			if new_datas:
+				ba = BasicAgent()
+				ba.search(raw_data_set=new_datas)
 		else:
 			print "We got no elements :( %s" % html
 
