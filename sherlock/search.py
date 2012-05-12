@@ -97,7 +97,19 @@ class BasicSearchAlgorithm():
 
 class BasicAgent():
 	def search(self, raw_data_set = None):
-		pass
+		print "Doing a basic search"
+		all_reports = []
+		if raw_data_set:
+			for raw_data in raw_data_set:
+				bsa = BasicSearchAlgorithm()
+				title = raw_data.title
+				search_text = raw_data.data
+				reports = bsa.do_search(search_text = search_text, title = title, raw_data = raw_data)	
+
+				if reports:
+					all_reports.extend(reports)
+		else:
+			print "No raw data supplied"
 	
 
 class FacebookAgent(BasicAgent):
@@ -191,10 +203,12 @@ class GoogleReaderAgent(BasicAgent):
 
 
 
-def get_class( kls ):
+def get_class( kls, args = None ):
     parts = kls.split('.')
     module = ".".join(parts[:-1])
     m = __import__( module )
     for comp in parts[1:]:
         m = getattr(m, comp)            
+    if args:
+	    return m(args)
     return m
