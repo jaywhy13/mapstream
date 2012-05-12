@@ -6,7 +6,7 @@ from celery.registry import tasks
 from listener.loader import *
 from listener.models import DataSource, DataSourceType, DataSourceStatus, RawData
 from stream.models import Event,EventReport
-
+from sherlock.search import get_class
 
 #@task(name="simplicity")
 class SampleTask(Task):
@@ -15,6 +15,26 @@ class SampleTask(Task):
 
     def run(self, x,y):
         return x + y
+
+class LoaderTask(Task):
+    
+    name = "loadertask"
+
+    def run(self, ds_type_name):
+        print "Running Loader Task for %s" % ds_type_name
+        dstype = DataSourceType.objects.get(name=ds_type_name)
+        active = DataSourceStatus.objects.get(name='Available')
+        data_source_set = DataSource.objects.filter(src_type=dstype,state=active)
+        classname = dstype.loader_class
+        
+        for data_source in data_source_set:
+            if data_source:
+                print "Loading content from site: %s" % data_source.description
+                loader = get_class(classname,data_source)
+                loader.load()
+            else:
+                print "We found an empty source"
+
 
 class SiteLinkLoaderTask(Task):
     
@@ -94,7 +114,6 @@ class LoaderTask(Task):
                 else:
                     print "No loader found"
                 
-                
         
 
 class PurgeAllTask(Task):
@@ -105,6 +124,7 @@ class PurgeAllTask(Task):
         RawData.objects.all().delete()
         EventReport.objects.all().delete()
 
+tasks.register(LoaderTask)
 tasks.register(SampleTask)
 tasks.register(FacebookLoaderTask)
 tasks.register(GoogleReaderLoaderTask)
