@@ -61,6 +61,7 @@ class DataSource(models.Model):
 
 
 
+
 class RawData(models.Model):
 	title = models.CharField(max_length=255)
 	source = models.ForeignKey("DataSource")
