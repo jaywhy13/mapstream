@@ -74,8 +74,6 @@ class EventReport(models.Model):
 				distance = event.location.distance(self.location)
 				if distance < event_type.distance_threshold and event.name == self.title:
 					result.append(event)
-			else:
-				print "No location information available for: %s" % event
 					
 		return result
 
