@@ -51,7 +51,7 @@ class BasicSearchAlgorithm():
 								for word in words:
 									# print "     Searching text for %s" % word
 									if word in search_text:
-										print " ++ Matched word: %s in %s" % (word,geotitle)
+										#print " ++ Matched word: %s in %s" % (word,geotitle)
 										report = self._create_event_report()
 										if title:
 											report.title = title + " (" + geotitle + ")"
@@ -67,7 +67,8 @@ class BasicSearchAlgorithm():
 											reports.append(report)
 											
 			except Exception as e:
-				print "ERROR: %s" % e
+				#print "ERROR: %s" % e
+				pass
 		return reports
 		# return search_array(search_text)
 
@@ -97,7 +98,7 @@ class BasicSearchAlgorithm():
 
 class BasicAgent():
 	def search(self, raw_data_set = None):
-		print "Doing a basic search"
+		#print "Doing a basic search"
 		all_reports = []
 		if raw_data_set:
 			for raw_data in raw_data_set:
@@ -109,8 +110,8 @@ class BasicAgent():
 				if reports:
 					all_reports.extend(reports)
 		else:
-			print "No raw data supplied"
-	
+			#print "No raw data supplied"
+			pass
 
 class FacebookAgent(BasicAgent):
 
@@ -134,7 +135,7 @@ class FacebookAgent(BasicAgent):
 
 	def search(self, raw_data_set=None):
 		"""Searches a collection of RawData with terms provided by the query array"""
-		print "Searching facebook raw data"
+		#print "Searching facebook raw data"
 		new_tag = DataTag.objects.get(name='new')
 		
 		fb_data_source_type = DataSourceType.objects.get(name='Facebook')
