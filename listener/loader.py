@@ -37,12 +37,12 @@ class FacebookLoader(Loader):
 
 	def __init__(self, data_src=None, object_id=103093949726983, token='AAADWc1jTVEkBAM00FK9cqwOV8HsD2nJjZBrrnWare1r4Htj4OfzX8fNNbwmU2mACjbxkMHxJjvdtRTgZBOtAczezKOMDIZD'):
 		if data_src:
-			print "Setup the data source"
+			#print "Setup the data source"
 			self.object_id = data_src.src_id
 			self.data_src = data_src
 		else:
 			self.object_id = object_id
-			print "Could not set the datasource"
+			#print "Could not set the datasource"
 		self.token = token
 		self.base_url = '%s/%s' % (self.base_url, self.object_id)
 		self.source_type = DataSourceType.objects.get(name='Facebook')
@@ -66,10 +66,10 @@ class FacebookLoader(Loader):
 	
 	def load_feed(self, store_data=True):
 		working_url = self._get_working_url('feed')
-		print 'loading feed from: %s' % working_url
+		#print 'loading feed from: %s' % working_url
 		# try:
 		f = urllib2.urlopen(working_url)
-		print f.info()
+		#print f.info()
 		data = f.read()
 		# print data
 		# try to decode the json string
@@ -152,7 +152,7 @@ class GoogleReaderLoader(Loader):
 
 
 	def load(self, store_data = True, date_limit=None):
-		print "Connecting as %s" % self.username
+		#print "Connecting as %s" % self.username
 		auth = ClientAuthMethod(self.username,self.psw)
 		
 		reader = GoogleReader(auth)
@@ -172,14 +172,14 @@ class GoogleReaderLoader(Loader):
 
 			for feed in feeds:
 				read_items = []
-				print "Reading " + feed.title + " (%s unread)" % feed.unread
-				print "===================================================="
-				print
-				print "Loading items"
-				print
+				#print "Reading " + feed.title + " (%s unread)" % feed.unread
+				#print "===================================================="
+				#print
+				# print "Loading items"
+				# print
 				feed.loadItems()
-				print "Loaded %s items" % (len(feed.items),)
-				print
+				# print "Loaded %s items" % (len(feed.items),)
+				# print
 				index = 0
 				for item in feed.items:
 					# make sure it doesn't already exist
@@ -188,21 +188,17 @@ class GoogleReaderLoader(Loader):
 					index+=1
 
 					if index + 1 >= len(feed.items) and fetch_count < self.fetch_limit:
-						print "Loading more items...."
-						print
+						# print "Loading more items...."
+						# print
 						feed.loadMoreItems()
-
-					if len(RawData.objects.filter(data_id=item.id,source=self.source_node)) > 0 or item in read_items:
-						print "   Skipping %s, we already saved it." % title
-						continue
 
 					f = urllib.urlopen(url)
 					html = f.read()
 					doc = leaf.parse(html)
 					elements = doc(self.article_css_selector)
 					for element in elements:
-						print " + Saving article: %s" % title
-						print
+						# print " + Saving article: %s" % title
+						# print
 						article_html = element.html()
 						new_data = RawData()
 						new_data.title = title
@@ -214,7 +210,7 @@ class GoogleReaderLoader(Loader):
 						try:
 							new_data.occurred_at = datetime.datetime.fromtimestamp(feed.lastUpdated)
 						except ValueError:
-							print "Error, could not parse timestamp: %s" % feed.lastUpdated
+							# print "Error, could not parse timestamp: %s" % feed.lastUpdated
 							new_data.occurred_at = datetime.datetime.now()
 
 						# patching in date limit thing Parris wanted --------------------------
@@ -239,7 +235,7 @@ class GoogleReaderLoader(Loader):
 						read_items.append(item)
 
 
-				print "All done.\n %s items fetched, our limit is %s. There are %s feeds. We stopped at index %s" % (fetch_count, self.fetch_limit, len(feed.items),index)
+				# print "All done.\n %s items fetched, our limit is %s. There are %s feeds. We stopped at index %s" % (fetch_count, self.fetch_limit, len(feed.items),index)
 
 			if new_datas:
 				gra = GoogleReaderAgent()
@@ -259,7 +255,7 @@ class RssLoader(Loader):
 		Uses the feedparser library to fetch the contents of an RSS feed from a given url. The entries in the
 		result are then used to create a new RawData object."""
 		data = feedparser.parse(self.url)
-		print data
+		# print data
 		# add data to 'RawData table'
 		for entry in data.entries:
 			rd = RawData()
@@ -309,7 +305,7 @@ class SiteLinkLoader(Loader):
 
 	def load(self, store_data=True):
 		if not self.article_css_selector or not self.article_link_selector:
-			print "No CSS selector information supplied, cannot load"
+			# print "No CSS selector information supplied, cannot load"
 			return None
 
 		article_links = SiteLinkLoader.get_elements_by_css(self.url, self.article_link_selector)
@@ -337,7 +333,7 @@ class SiteLinkLoader(Loader):
 					# create a new raw data if none exists
 					similar_raw_datas = RawData.objects.filter(title=article_title)
 					if not similar_raw_datas:
-						print " + Saving article: %s" % article_title
+						# print " + Saving article: %s" % article_title
 						new_data = RawData()
 						new_data.title = article_title
 						new_data.data = article_content
@@ -350,13 +346,9 @@ class SiteLinkLoader(Loader):
 							new_data.tags.add(new_tag)
 							new_data.save()
 						new_datas.append(new_data)
-					else:
-						print " - Skipping already saved article: %s" % article_title
 			if new_datas:
 				ba = BasicAgent()
 				ba.search(raw_data_set=new_datas)
-		else:
-			print "We got no elements :( %s" % html
 
 
 def strip_tags(str):
