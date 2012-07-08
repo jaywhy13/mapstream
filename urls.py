@@ -1,6 +1,8 @@
 from django.conf.urls.defaults import patterns, include, url
 from mapstream2.stream import views
 from mapstream2.listener import views as l_api
+import timeline
+import timeline.urls
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
@@ -20,6 +22,9 @@ urlpatterns = patterns('',
     # listener api:
     url(r'^listener/(\w+)/(\w*)', l_api.list_data, name='listener_api'),	# will make it more strict eventually -- dont remember what this is for!!
     # url(r'^mapstream2/', include('mapstream2.foo.urls')),
+
+    # timeline api
+    url(r'^time/', include(timeline.urls.urlpatterns)),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
