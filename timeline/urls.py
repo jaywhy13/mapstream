@@ -17,7 +17,17 @@ group_patterns = patterns('',
                           url(r'^(?P<mode>\w+)(?P<year>\d{4})/(?P<month>\d{2})/(?P<week>\d{2})$', views.group, name='group_year_month_week'),
                           )
 
+
+count_patterns = patterns('', 
+                          url(r'^$', views.group, name='count_default'),
+                          url(r'^(?P<mode>\w+)$', views.group, name='count'),
+                          url(r'^(?P<mode>\w+)/(?P<year>\d{4})$', views.group, name='count_year'),
+                          url(r'^(?P<mode>\w+)/(?P<year>\d{4})/(?P<month>\d{2})$', views.group, name='count_year_month'),
+                          url(r'^(?P<mode>\w+)(?P<year>\d{4})/(?P<month>\d{2})/(?P<week>\d{2})$', views.group, name='count_year_month_week'),
+                          )
+
 urlpatterns = patterns('',
                        url(r'^events/', include(event_patterns)),
                        url(r'^group/', include(group_patterns)),
-)
+                       url(r'^count/', include(count_patterns), {'aggregate':True}),
+                       )

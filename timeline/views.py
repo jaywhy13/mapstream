@@ -151,7 +151,7 @@ def filter_events_from_request(request, year=None, month=None, week=None):
 
     return results
 
-def group(request, mode="month", year=None, month=None, week=None):
+def group(request, mode="month", year=None, month=None, week=None, aggregate=False):
 
     print "Mode: %s" % mode
 
@@ -164,9 +164,9 @@ def group(request, mode="month", year=None, month=None, week=None):
     if mode not in ["year", "month", "week", "day"]:
         raise Http404
 
-
     results = filter_events_from_request(request, year=year, month=month, week=week)
     grouped_results = {}
+    total = len(results)
     mode = str(mode)
     for result in results:
         ymwd = result["ymwd"]
@@ -175,23 +175,26 @@ def group(request, mode="month", year=None, month=None, week=None):
         if mode == "year":
             prefix = year
         elif mode == "month":
-            print "I came here"
             prefix = "%s-%s" % (year, month)
         elif mode == "week":
             prefix = "%s-%s-%s" % (year, month, week)
         elif mode == "day":
             prefix = ymwd
             
-        prefix_results = grouped_results.get(prefix,[])
-        prefix_results.extend([result])
-        grouped_results[prefix] = prefix_results
+        if aggregate:
+            prefix_results = grouped_results.get(prefix,0)
+            prefix_results += len([result])
+            grouped_results[prefix] = prefix_results
+        else:
+            prefix_results = grouped_results.get(prefix,[])
+            prefix_results.extend([result])
+            grouped_results[prefix] = prefix_results
     
-    resp = json.dumps(dict(results=grouped_results))
+    resp = json.dumps(dict(results=grouped_results, total=total))
     return HttpResponse(resp)
     
     
     
-
 def time(request, year=None, month=None, week=None):
 
     if request.method == 'GET':
@@ -200,7 +203,8 @@ def time(request, year=None, month=None, week=None):
         raise Http404
 
     results = filter_events_from_request(request, year=year, month=month, week=week)
-    resp = json.dumps(dict(results=results))
+    total = len(results)
+    resp = json.dumps(dict(results=results, total=total))
 
     return HttpResponse(resp)
 
