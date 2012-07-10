@@ -1,0 +1,169 @@
+body {
+	padding: 0;
+	margin: 0;
+	font-family: 'Maven Pro', sans-serif;
+}
+
+#header {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 90px;
+	width: 100%;
+	z-index: 10;
+	background-color: rgba(255, 255, 255, 0.9);
+	border-bottom: 4px solid rgba(0, 0, 0, 0.2);
+}
+
+.logoImg {
+	padding-top: 15px;
+	padding-left: 15px;
+	height: 60px;
+}
+
+/* Toolbar buttons */
+#listButton.button_normal {
+	background-image: url('../images/hide_show_sprite.png');
+	background-position: 0px 0px;
+	width: 60px;
+	height: 90px;
+	float: right;
+}
+
+#listButton.button_hover {
+	background-position: 0px -100px;
+}
+
+#listButton.button_active {
+	background-position: 0px -200px;
+}
+
+#searchButton.button_normal {
+	background-image: url('../images/search_sprite.png');
+	background-position: 0px 0px;
+	width: 60px;
+	height: 90px;
+	float: right;
+}
+
+#searchButton.button_hover {
+	background-position: 0px -100px;
+}
+
+#searchButton.button_active {
+	background-position: 0px -200px;
+}
+
+#timelineButton.button_normal {
+	background-image: url('../images/timeline_sprite.png');
+	background-position: 0px 0px;
+	width: 60px;
+	height: 90px;
+	float: right;
+	margin-right: 10px;
+}
+
+#timelineButton.button_hover {
+	background-position: 0px -100px;
+}
+
+#timelineButton.button_active {
+	background-position: 0px -200px;
+}
+
+/* Style for InfoWindow popup */
+.infoWindowContent {
+    margin: 10px;
+    text-align: left;
+    font-size: 13px;
+}
+
+.infoWindowContent ul {
+    padding: 0;
+}
+
+.infoWindowContent h3 {
+/*    color: #5e5e5e;*/
+    margin-bottom: 5px;
+}
+
+.infoWindowContent hr {
+    color: #ccc;
+    background-color: #ccc;
+    height: 1px;
+    border: none;
+}
+
+/* Toolbar menu main style */
+#toolbar_menu {
+	width: 400px;
+	/*height: 200px;*/
+	position: absolute;
+	top: 90px;
+	right: 10px;
+	z-index: 9;
+	background-color: rgba(255, 255, 255, 0.9);
+	border-bottom-right-radius: 10px;
+	border-bottom-left-radius: 10px;
+	-webkit-box-shadow:  0px 3px 5px 2px rgba(0, 0, 0, 0.1);
+	box-shadow:  0px 3px 5px 2px rgba(0, 0, 0, 0.1);
+	border: 1px solid rgba(0, 0, 0, 0.2);
+	padding: 10px;
+	font-size: 13px;
+	display: none;  /* set to none initially so the menu is hidden  */
+}
+
+.event_type_block {
+	display: inline-block;
+	padding: 5px;
+	margin-right: 10px;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+.block_highlighted {
+	background-color: #e8e8e8;
+}
+
+.block_off {
+	opacity: 0.4;
+}
+
+.event_off_indicator {
+	/*position: absolute;*/
+	display: none;
+	bottom: 24px;
+	left: 0;
+}
+
+.colour_swatch {
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	border: 1px solid black;
+}
+
+#hide_show_events_container hr {
+	color: #ccc;
+    background-color: #ccc;
+    height: 1px;
+    border: none;
+}
+
+#search_container span {
+	display: block;
+	overflow: hidden;
+	padding-right: 10px;
+}
+
+#search_container input {
+	width: 100%;
+	-webkit-box-shadow: inset 0px 0px 4px 1px rgba(0, 0, 0, 0.1);
+	box-shadow: inset 0px 0px 4px 1px rgba(0, 0, 0, 0.1);
+	border: 1px solid rgba(0, 0, 0, 0.3);
+	border-radius: 2px;
+}
+
+#search_container button {
+	float: right;
+}
