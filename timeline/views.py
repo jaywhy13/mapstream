@@ -9,6 +9,7 @@ MAXDAYS = 31
 MAXMONTHS = 12
 MAXYEARS = 5
 MAXWEEKS = 52
+MAXLIMIT = 500
 
 def add_event(tree, event):
     date = event.occurred_at
@@ -195,14 +196,47 @@ def group(request, mode="month", year=None, month=None, week=None, aggregate=Fal
     
     
     
-def time(request, year=None, month=None, week=None):
+def time(request, year=None, month=None, week=None, filter=None):
 
     if request.method == 'GET':
         params = request.GET
     else:
         raise Http404
 
+    try:
+        limit = min(int(params.get('limit', 0)),MAXLIMIT)
+    except Exception:
+        limit = 0
+
+    try:
+        last = min(int(params.get('last', 0)),MAXLIMIT)
+    except Exception:
+        last = 0
+
+
+    if filter and filter not in ['max', 'min']:
+        raise Http404
+
+    if filter and limit: # cannot apply limit and filter
+        raise Http404
+
+    if limit and last:
+        raise Http404 # cannot apply limit and last
+
     results = filter_events_from_request(request, year=year, month=month, week=week)
+
+    if filter:
+        if str(filter) == 'max':
+            results = [results[-1]]
+        else:
+            results = [results[0]]
+
+    if limit:
+        results = results[:limit]
+
+    if last:
+        results = results[-last:]
+    
     total = len(results)
     resp = json.dumps(dict(results=results, total=total))
 

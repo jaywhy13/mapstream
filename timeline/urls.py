@@ -28,6 +28,9 @@ count_patterns = patterns('',
 
 urlpatterns = patterns('',
                        url(r'^events/', include(event_patterns)),
-                       url(r'^group/', include(group_patterns)),
-                       url(r'^count/', include(count_patterns), {'aggregate':True}),
+                       url(r'^events/max/', include(event_patterns), {'filter':'max'}),
+                       url(r'^events/min/', include(event_patterns), {'filter':'min'}),
+                       url(r'^events/group/', include(group_patterns)),
+                       url(r'^events/count/', include(count_patterns), {'aggregate':True}),
                        )
+
