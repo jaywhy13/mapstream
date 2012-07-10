@@ -1,0 +1,1 @@
+[{"pk": 1, "model": "stream.geolocation", "fields": {"classname": "mapstream_staging.stream.models.GeoObject", "search_field": "community"}}, {"pk": 2, "model": "stream.geolocation", "fields": {"classname": "mapstream_staging.stream.models.Road", "search_field": "name"}}]
