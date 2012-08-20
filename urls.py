@@ -3,6 +3,8 @@ from django.views.generic.simple import redirect_to
 from mapstream2 import views as global_views
 from mapstream2.stream import views
 from mapstream2.listener import views as l_api
+import timeline
+import timeline.urls
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
@@ -27,6 +29,8 @@ urlpatterns = patterns('',
 
     # search urls:
     url(r'^search$', views.basic_search, name='search'),
+    # timeline api
+    url(r'^time/', include(timeline.urls.urlpatterns)),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),

@@ -1,5 +1,31 @@
-# ignore compiled python files
-*.pyc
+*.py[co]
+
+# Packages
+*.egg
+*.egg-info
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.tox
+
+#Translations
+*.mo
+
+#Mr Developer
+.mr.developer.cfg
+
 *.py~
 *.py\#
 
@@ -9,11 +35,14 @@
 
 # ignore south migration folders
 migrations/
-
-
+/static/
+/apache/
 
 # ingore temp files
 *.*~
+.*~
+# ignore nohup files
+nohup.out
+errors
 
-# ignore settings.py
-settings.py
+
