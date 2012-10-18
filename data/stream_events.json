@@ -1,0 +1,26 @@
+[
+    {
+        "pk": 1, 
+        "model": "stream.eventtype", 
+        "fields": {
+            "name": "Flood", 
+            "keyword": "flood", 
+            "colour": "#30aef2", 
+            "report_threshold": 0, 
+            "distance_threshold": 0.0, 
+            "description": "A lot of water flowing around etc"
+        }
+    }, 
+    {
+        "pk": 2, 
+        "model": "stream.eventtype", 
+        "fields": {
+            "name": "Riot", 
+            "keyword": "riot", 
+            "colour": "#ad98da", 
+            "report_threshold": 0, 
+            "distance_threshold": 0.0, 
+            "description": "Civil unrest in the streets"
+        }
+    }
+]

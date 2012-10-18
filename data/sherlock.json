@@ -1,0 +1,96 @@
+[
+    {
+        "pk": 1, 
+        "model": "sherlock.wordtype", 
+        "fields": {
+            "name": "noun", 
+            "description": "Not really used yet"
+        }
+    }, 
+    {
+        "pk": 2, 
+        "model": "sherlock.wordtype", 
+        "fields": {
+            "name": "verb", 
+            "description": ""
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "sherlock.word", 
+        "fields": {
+            "similar_words": [], 
+            "finite_forms": [], 
+            "root": "flooded", 
+            "word_type": 2
+        }
+    }, 
+    {
+        "pk": 2, 
+        "model": "sherlock.word", 
+        "fields": {
+            "similar_words": [], 
+            "finite_forms": [], 
+            "root": "flooding", 
+            "word_type": 2
+        }
+    }, 
+    {
+        "pk": 3, 
+        "model": "sherlock.word", 
+        "fields": {
+            "similar_words": [], 
+            "finite_forms": [
+                1, 
+                2
+            ], 
+            "root": "flood", 
+            "word_type": 1
+        }
+    }, 
+    {
+        "pk": 4, 
+        "model": "sherlock.word", 
+        "fields": {
+            "similar_words": [], 
+            "finite_forms": [], 
+            "root": "rioting", 
+            "word_type": 2
+        }
+    }, 
+    {
+        "pk": 5, 
+        "model": "sherlock.word", 
+        "fields": {
+            "similar_words": [], 
+            "finite_forms": [], 
+            "root": "rioted", 
+            "word_type": 2
+        }
+    }, 
+    {
+        "pk": 6, 
+        "model": "sherlock.word", 
+        "fields": {
+            "similar_words": [], 
+            "finite_forms": [], 
+            "root": "unrest", 
+            "word_type": 1
+        }
+    }, 
+    {
+        "pk": 7, 
+        "model": "sherlock.word", 
+        "fields": {
+            "similar_words": [
+                6
+            ], 
+            "finite_forms": [
+                4, 
+                5
+            ], 
+            "root": "riot", 
+            "word_type": 2
+        }
+    }
+]

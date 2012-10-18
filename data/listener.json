@@ -1,0 +1,138 @@
+[
+    {
+        "pk": 1, 
+        "model": "listener.datatag", 
+        "fields": {
+            "name": "new", 
+            "description": ""
+        }
+    }, 
+    {
+        "pk": 2, 
+        "model": "listener.datatag", 
+        "fields": {
+            "name": "valid", 
+            "description": ""
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "listener.datasourcetype", 
+        "fields": {
+            "loader_class": "mapstream2.listener.loader.GoogleReaderLoader", 
+            "name": "GoogleReader", 
+            "description": "Loads stories from a google reader rss feed"
+        }
+    }, 
+    {
+        "pk": 2, 
+        "model": "listener.datasourcetype", 
+        "fields": {
+            "loader_class": "mapstream2.listener.loader.FacebookLoader", 
+            "name": "Facebook", 
+            "description": "A facebook wall/feed"
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "listener.datasourcestatus", 
+        "fields": {
+            "name": "Available", 
+            "description": ""
+        }
+    }, 
+    {
+        "pk": 2, 
+        "model": "listener.datasourcestatus", 
+        "fields": {
+            "name": "In-active", 
+            "description": ""
+        }
+    }, 
+    {
+        "pk": 3, 
+        "model": "listener.datasourcestatus", 
+        "fields": {
+            "name": "In-use", 
+            "description": ""
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "listener.datasourceparameter", 
+        "fields": {
+            "name": "password", 
+            "value": "sherlock!"
+        }
+    }, 
+    {
+        "pk": 2, 
+        "model": "listener.datasourceparameter", 
+        "fields": {
+            "name": "username", 
+            "value": "mapstreamreader@gmail.com"
+        }
+    }, 
+    {
+        "pk": 3, 
+        "model": "listener.datasourceparameter", 
+        "fields": {
+            "name": "article-css-selector", 
+            "value": "div.KonaBody"
+        }
+    }, 
+    {
+        "pk": 4, 
+        "model": "listener.datasourceparameter", 
+        "fields": {
+            "name": "fetch-limit", 
+            "value": "100"
+        }
+    }, 
+    {
+        "pk": 5, 
+        "model": "listener.datasourceparameter", 
+        "fields": {
+            "name": "article-link-selector", 
+            "value": ".storylist a"
+        }
+    }, 
+    {
+        "pk": 6, 
+        "model": "listener.datasourceparameter", 
+        "fields": {
+            "name": "article-css-selector", 
+            "value": ".article p"
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "listener.datasource", 
+        "fields": {
+            "src_id": "311866225516308", 
+            "description": "MGI Mapstream page", 
+            "parameters": [], 
+            "time_last_active": null, 
+            "state": 1, 
+            "date_added": "2012-07-06 15:48:55", 
+            "src_type": 2
+        }
+    }, 
+    {
+        "pk": 2, 
+        "model": "listener.datasource", 
+        "fields": {
+            "src_id": "mapstreamreader@gmail.com", 
+            "description": "Test google reader account", 
+            "parameters": [
+                1, 
+                2, 
+                3
+            ], 
+            "time_last_active": null, 
+            "state": 1, 
+            "date_added": "2012-07-06 15:49:25", 
+            "src_type": 1
+        }
+    }
+]
