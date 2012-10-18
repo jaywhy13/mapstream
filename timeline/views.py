@@ -22,11 +22,12 @@ def add_event(tree, event):
     id = event.pk
     caption = event.name
     ymwd = date.strftime("%Y-%m-%W-%d")
+    event_type = event.event_type.id
     
     if tree.has_key(date_str):
         values = tree[date_str]
 
-    values.append(dict(id=id, caption=caption, ymwd=ymwd))
+    values.append(dict(id=id, caption=caption, ymwd=ymwd, type=event_type))
     tree[date_str] = values
 
     return tree
@@ -166,9 +167,12 @@ def group(request, mode="month", year=None, month=None, week=None, aggregate=Fal
         raise Http404
 
     results = filter_events_from_request(request, year=year, month=month, week=week)
+
     grouped_results = {}
     total = len(results)
     mode = str(mode)
+    group_event_type = "le" in params
+
     for result in results:
         ymwd = result["ymwd"]
         year, month, week, day = ymwd.split("-")
@@ -190,10 +194,29 @@ def group(request, mode="month", year=None, month=None, week=None, aggregate=Fal
             prefix_results = grouped_results.get(prefix,[])
             prefix_results.extend([result])
             grouped_results[prefix] = prefix_results
-    
-    resp = json.dumps(dict(results=grouped_results, total=total))
-    return HttpResponse(resp)
-    
+    # if grouping by type:
+    if group_event_type:
+        typed_results = {}
+        for key in grouped_results:
+            print "group result key: %s" % key
+            result_set = grouped_results[key]
+            new_results = {}
+            for result in result_set:
+                print result
+                type_result = new_results.get(result["type"], [])
+                type_result.extend([result])
+                new_results[result["type"]] = type_result
+            typed_results[key] = new_results
+        print("typed results: %s" % typed_results)
+        final_results = typed_results
+    else:
+        final_results = grouped_results
+
+    pretty = "pretty" in params
+    resp = json.dumps(dict(results=final_results, total=total), sort_keys=pretty, indent=4 if pretty else None)
+    return HttpResponse(resp, mimetype='application/json')
+
+
     
     
 def time(request, year=None, month=None, week=None, filter=None):
