@@ -19,7 +19,6 @@ from listener.greader.auth import *
 import feedparser
 import leaf
 
-
 class Loader():
 	source_type = None
 
@@ -136,108 +135,116 @@ class FacebookLoader(Loader):
 
 class GoogleReaderLoader(Loader):
 
-	def __init__(self, data_src):
-		self.url = data_src.src_id
-		self.source_node = data_src
-		self.parameters = data_src.get_parameters()
-
+	def __init__(self, data_src=None):
+		""" Initialize with a data source, if none is given, we will loop load info using 
+			all of them 
+		""" 
 		# set the src type
-		self.source_type = DataSourceType.objects.get(name='GoogleReader')
-		
-		# check for crucial parameters
-		self.username = self.parameters.get('username','adventistvoices@gmail.com')
-		self.psw = self.parameters.get('password','choirpassword')
-		self.article_css_selector = self.parameters.get('article-css-selector','')
-		self.fetch_limit = self.parameters.get('fetch-limit',50)
+		self.source_type = DataSourceType.objects.get_or_create(name='GoogleReader', loader_class='mapstream2.listener.loader.GoogleReaderLoader')[0]
+
+		if data_src:
+			self.data_sources = [data_src]	
+		else:
+			self.data_sources = DataSource.objects.filter(src_type=self.source_type)
 
 
-	def load(self, store_data = True, date_limit=None):
-		#print "Connecting as %s" % self.username
-		auth = ClientAuthMethod(self.username,self.psw)
-		
-		reader = GoogleReader(auth)
-		if reader.buildSubscriptionList():
-			feeds = reader.getSubscriptionList()
-			new_tag = DataTag.objects.get(name='new')
-			new_datas = []
 
-			unprocessed_datas = RawData.objects.filter(source=self.source_node, tags__in=[new_tag])
-			if unprocessed_datas:
-				new_datas.extend(unprocessed_datas)
+	def load(self, store_data = True, date_limit=None, run_agent=False):
+		for data_src in self.data_sources:
+			print "Loading data from: %s" % data_src
 
-			fetch_count = 0
+			# init variables from the data source
+			url = data_src.src_id
+			source_node = data_src
+			parameters = data_src.get_parameters()
+			username = parameters.get('username','adventistvoices@gmail.com')
+			psw = parameters.get('password','choirpassword')
+			article_css_selector = parameters.get('article-css-selector','')
+			fetch_limit = parameters.get('fetch-limit',None)
 
-			# loop through and store feeds we already have RawData for
+			auth = ClientAuthMethod(username,psw)
+			
+			reader = GoogleReader(auth)
+			if reader.buildSubscriptionList():
+				feeds = reader.getSubscriptionList()
+				new_tag = DataTag.objects.get(name='new')
+				new_datas = []
 
+				fetch_count = 0
 
-			for feed in feeds:
-				read_items = []
-				#print "Reading " + feed.title + " (%s unread)" % feed.unread
-				#print "===================================================="
-				#print
-				# print "Loading items"
-				# print
-				feed.loadItems()
-				# print "Loaded %s items" % (len(feed.items),)
-				# print
-				index = 0
-				for item in feed.items:
-					# make sure it doesn't already exist
-					title = item.title
-					url = item.url
-					index+=1
-
-					if index + 1 >= len(feed.items) and fetch_count < self.fetch_limit:
-						# print "Loading more items...."
-						# print
-						feed.loadMoreItems()
-
-					f = urllib.urlopen(url)
-					html = f.read()
-					doc = leaf.parse(html)
-					elements = doc(self.article_css_selector)
-					for element in elements:
-						# print " + Saving article: %s" % title
-						# print
-						article_html = element.html()
-						new_data = RawData()
-						new_data.title = title
-						new_data.source = self.source_node
-						new_data.data = strip_tags(article_html)
-						new_data.data_id = item.id
-						new_data.link = item.url
-
-						try:
-							new_data.occurred_at = datetime.datetime.fromtimestamp(feed.lastUpdated)
-						except ValueError:
-							# print "Error, could not parse timestamp: %s" % feed.lastUpdated
-							new_data.occurred_at = datetime.datetime.now()
-
-						# patching in date limit thing Parris wanted --------------------------
-						# if date_limit is None:
-						#	date_limit = datetime.date.today() - datetime.timedelta(week=1)
-						#
-						# if new_data.occured_at < date_limit:
-						# 	# we should skip this item .... it is too old
-						# 	continue
-						#
-						# end patch -----------------------------------------------------------
-						# Abandonning this idea for now ... I think it's best to patch the map view and not mess with this for now
-
-							
-						# if it is not new... save it
-						if not new_data.exists():
-							new_data.save()
-							new_data.tags.add(new_tag)
-							new_datas.append(new_data)
-							fetch_count +=1
-
-						read_items.append(item)
+				# loop through and store feeds we already have RawData for
 
 
-				# print "All done.\n %s items fetched, our limit is %s. There are %s feeds. We stopped at index %s" % (fetch_count, self.fetch_limit, len(feed.items),index)
+				for feed in feeds:
+					if not fetch_limit:
+						fetch_limit = feed.unread
+					read_items = []
+					print "Reading " + feed.title + " (%s unread)" % feed.unread
+					print "===================================================="
+					print
+					print "Loading items"
+					print
+					feed.loadItems()
+					print "Loaded %s items" % (len(feed.items),)
+					print
+					index = 0
+					for item in feed.items:
+						# make sure it doesn't already exist
+						title = item.title
+						url = item.url
+						index+=1
 
-			if new_datas:
+						if index + 1 >= len(feed.items) and fetch_count < fetch_limit:
+							print "Loading more items...."
+							print
+							feed.loadMoreItems()
+
+						f = urllib.urlopen(url)
+						html = f.read()
+						doc = leaf.parse(html)
+						elements = doc(article_css_selector)
+						for element in elements:
+							# print
+							article_html = element.html()
+							new_data = RawData()
+							new_data.title = title
+							new_data.source = source_node
+							new_data.data = strip_tags(article_html)
+							new_data.data_id = item.id
+							new_data.link = item.url
+
+							try:
+								new_data.occurred_at = datetime.datetime.fromtimestamp(feed.lastUpdated)
+							except ValueError:
+								# print "Error, could not parse timestamp: %s" % feed.lastUpdated
+								new_data.occurred_at = datetime.datetime.now()
+
+							# patching in date limit thing Parris wanted --------------------------
+							# if date_limit is None:
+							#	date_limit = datetime.date.today() - datetime.timedelta(week=1)
+							#
+							# if new_data.occured_at < date_limit:
+							# 	# we should skip this item .... it is too old
+							# 	continue
+							#
+							# end patch -----------------------------------------------------------
+							# Abandonning this idea for now ... I think it's best to patch the map view and not mess with this for now
+
+								
+							# if it is not new... save it
+							if not new_data.exists():
+								print " + Saving article: %s" % new_data.title
+								new_data.save()
+								new_data.tags.add(new_tag)
+								new_datas.append(new_data)
+								fetch_count +=1
+
+							read_items.append(item)
+
+
+					# print "All done.\n %s items fetched, our limit is %s. There are %s feeds. We stopped at index %s" % (fetch_count, self.fetch_limit, len(feed.items),index)
+
+			if new_datas and run_agent:
 				gra = GoogleReaderAgent()
 				gra.search(raw_data_set = new_datas)
 			return new_datas
