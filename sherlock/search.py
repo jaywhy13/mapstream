@@ -21,7 +21,7 @@ class GazetteerSearchAlgorithm():
 		if not search_text:
 			return reports
 
-		threshold = 40
+		threshold = 60
 		
 		weightings = {}
 
@@ -29,7 +29,6 @@ class GazetteerSearchAlgorithm():
 			event_types = EventType.objects.all()
 
 		#print "Searching gazetteer for places in %s" % title
-		print " -------------------------------------------"
 
 		# start searching each level
 		start_level = 0
@@ -57,7 +56,7 @@ class GazetteerSearchAlgorithm():
 							
 					for place in places:
 						if place.search(search_text): # search text for occurrence
-							print " Match found in %s (Place: %s, Word: %s, Level: %s)" % (title, place.name, word, i)
+							#print " Match found in %s (Place: %s, Word: %s, Level: %s)" % (title, place.name, word, i)
 							weighting = place.weighting
 
 							# =======================================================
@@ -68,22 +67,47 @@ class GazetteerSearchAlgorithm():
 							if place.name.lower() in common_words:
 								weighting -= 30
 
-							# calculate the weighting based on proximity to lower levels 
+							# add weighting based on occurrence
+							search_text_occurrences = place.count_occurrences(search_text)
+							weighting += 5 * search_text_occurrences
+							#if search_text_occurrences:
+							#	print " Adding search text occurrence: %s" % search_text_occurrences * 5
+
+
+							# add wieghting based on occurrence in the title
+							title_occurrences = place.count_occurrences(title)
+							weighting += 30 * title_occurrences
+							#if title_occurrences:
+							#	print " Adding title occurrence: %s" % title_occurrences * 30
+
+
+							# calculate the weighting based on proximity to the previous level
 							if i > start_level:
 								total_distance = 0
 								lower_level_weightings = weightings.get(i-1, [])
+								within_lower_level = 0
+								distance_penalty = 0
 								for pk in lower_level_weightings:
 									lower_level_place = Gazetteer.objects.get(pk=pk)
 									results = Gazetteer.objects.filter(pk=place.pk).distance(lower_level_place.geom)
-									total_distance += results[0].distance.m
-									#total_distance += lower_level_place.geom.distance(place.geom)
-									print " Distance from %s to %s is %s" % (place.name, lower_level_place.name, total_distance)
+									dist = results[0].distance.m / 1000.0 # in km
+									total_distance += dist
 
-								if lower_level_weightings:
+									#print " Distance from %s to %s is %s" % (place.name, lower_level_place.name, dist)
 									# minus the distance in km from the weighting 
-									distance_penalty = (total_distance/(1000 * (200/14.0)))
+									if i == 1: # previous level is country
+										distance_penalty += 80 if total_distance > 250 else 0 
+									elif i == 2: # previous level is parish
+										# minus 10 for every 30km out
+										distance_penalty += 10 * total_distance / 30
+										if dist < 50:
+											within_lower_level = True
+											weighting += lower_level_place.weighting / 2										
+											#print " Distance plus %s" % (lower_level_place.weighting / 2)
+								if not within_lower_level:
 									weighting = weighting - distance_penalty
-									print " Distance pentalty is %s" % distance_penalty
+									#print " Distance pentalty is %s" % distance_penalty
+
 							level_weightings[place.pk] = weighting
 					
 					# now minus the km distance from the centroid
@@ -96,7 +120,8 @@ class GazetteerSearchAlgorithm():
 							weighting = level_weightings.get(place_pk)
 							place = Gazetteer.objects.get(pk=place_pk)
 							distance_to_centroid = place.geom.distance(centroid)
-							weighting = weighting - (distance_to_centroid/1000)
+							#print "Applying weight diff %s" % distance_to_centroid
+							#weighting = weighting - (distance_to_centroid/1000)
 							level_weightings[place_pk] = weighting
 
 					# update the weightings
@@ -120,7 +145,7 @@ class GazetteerSearchAlgorithm():
 						# now only create reports for the top limit places
 						top_places = tuple_listing
 						reports_saved = 0
-						print " Saving top places"
+						#print " Saving top places"
 						for (top_place_pk, weighting) in top_places:
 							try:
 								top_place = Gazetteer.objects.get(pk=top_place_pk)
@@ -128,8 +153,10 @@ class GazetteerSearchAlgorithm():
 								continue
 
 							if weighting < threshold:
-								print "%s weighting of %s is below the threshold" % (top_place.name, weighting)
+								print " - Discarding %s with weighting of %s" % (top_place.name, weighting)
 								continue
+							print " + Keeping %s with weighting of %s" % (top_place.name, weighting)
+
 							report = create_event_report()
 							if title:
 								report.title = title + " (" + top_place.name + ")"
@@ -142,20 +169,15 @@ class GazetteerSearchAlgorithm():
 
 							# only save the report if it doesn't exist
 							if not report.exists():
-								print " + Saving report: %s (Weighting: %s, Level: %s) " % (report.title, weighting, top_place.level)
+								print " >> Saving report: %s (Weighting: %s, Level: %s) " % (report.title, weighting, top_place.level)
 								#report.save()
 								reports.append(report)
 								reports_saved = reports_saved + 1
 							
 							if reports_saved >= limit:
 								break
-							
-
-						print 
 						break # don't do any levels lower than this one
-			if reports:
-				print "------------------------------------------"
-				print
+
 		return reports
 
 
