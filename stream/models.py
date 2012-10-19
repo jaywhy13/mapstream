@@ -3,7 +3,11 @@ from django.contrib.gis.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
+from django.contrib.gis.utils import LayerMapping
+from django.contrib.gis.gdal import DataSource		
+from django.contrib.gis.geos import GEOSGeometry
 import datetime, random, string
+import os
 
 # These are the core models of the system
 
@@ -23,6 +27,46 @@ class Vote(models.Model):
 	# the user who the vote belongs to. User votes have different weights
 	user = models.ForeignKey(User, blank=True, null=True)
 
+
+class Gazetteer(models.Model):
+	""" This class holds all different types of spatial data sets
+	"""
+	name = models.CharField(max_length=100)
+	description = models.TextField(blank=True, null=True)
+	geom = models.PointField(srid=4326)
+	level = models.PositiveIntegerField()
+	weighting = models.PositiveIntegerField()
+
+	objects = models.GeoManager()
+
+
+	def search(self, search_text):
+		""" Does keyword searches and considers the complexities of the gazetteer entry
+		"""
+		return self.name.title() in search_text.title() if self.name.strip() else False
+
+	def __unicode__(self):
+		return "%s @ level:%s weighting: %s" % (self.name, self.level, self.weighting)
+
+	@staticmethod
+	def load_data(shp_file, level=0, weighting=0, col_name="name"):
+		if os.path.exists(shp_file):
+			ds = DataSource(shp_file)
+			layer = ds[0] if ds.layer_count else None
+			Gazetteer.objects.filter(level=level).delete() # clear this level
+			if layer and layer.num_feat:
+				for feat in layer:
+					geom = feat.geom.geos
+					name = feat.get(col_name)
+					print "Creating Gazetteer entry for %s" % name
+					centroid = geom.centroid
+					Gazetteer.objects.create(name=name, geom=centroid, level=level, weighting=weighting)
+
+	# Use these to load in data for country, parish and community
+	# Gazetteer.objects.create(name='Jamaica', geom=GEOSGeometry('POINT (-77.5 18.25)'), level=0, weighting=80)
+	# Gazetteer.load_data("stream/data/boundary/jamaica_parishes_WGS84.shp", level=1, weighting=60, col_name="PARISH")
+	# Gazetteer.load_data("stream/data/boundary/community.shp", level=2, weighting=40, col_name="COMMUNITY")
+	# Gazetteer.load_data("stream/data/multipart_centroids_wgs84.shp", level=5, weighting=20, col_name="NAME")
 
 class GeoObject(models.Model):
 	"""For now this is a MultiPolygon of Communities"""
@@ -86,7 +130,6 @@ class EventReport(models.Model):
 
 	def __unicode__(self):
 		return "%s by %s %s" % (self.title, self.made_by, self.time_of_report)
-
 
 class EventType(models.Model):
 	name = models.CharField(max_length=255)
