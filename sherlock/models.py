@@ -32,6 +32,11 @@ class Word(models.Model):
 	def __unicode__(self):
 		return u"%s" % self.root
 
+	@staticmethod
+	def create_word(word, type="noun"):
+		(word_type, created) = WordType.objects.get_or_create(name=type)
+		return Word.objects.create(root=word, word_type=word_type)
+
 	def get_all_forms(self):
 		"""Returns a list containing the root word and all the finite_forms"""
 		finite_forms = [word.root for word in self.finite_forms.all()]
@@ -61,11 +66,14 @@ class Word(models.Model):
 			return []
 
 	@staticmethod
-	def get_word(text):
-		try:
-			return Word.objects.get(root=text)
-		except:
-			return None
+	def get_word(text, type="noun"):
+		(word_type, created) = WordType.objects.get_or_create(name=type)
+		matches = Word.objects.filter(root=text, word_type=word_type)
+		if len(matches) > 1: # we have duplicate words... delete all but the first
+			for match in matches[1:]:
+				match.delete()
+		(word, created) = Word.objects.get_or_create(root=text, word_type=word_type)
+		return word
 
 	
 
