@@ -36,6 +36,11 @@ class GeoLocationAdmin(admin.ModelAdmin):
 	list_display = ['classname','search_field']
 
 
+class GazetteerAdmin(admin.ModelAdmin):
+	list_display = ('name', 'level', 'weighting',)
+	list_filter = ('level',)
+	search_fields = ('name',)
+
 admin.site.register(models.Tag, TagAdmin)
 geo_admin.site.register(models.Event, EventAdmin)
 admin.site.register(models.EventType, EventTypeAdmin)
@@ -45,3 +50,4 @@ admin.site.register(models.SecureViewParameter, SecureViewParameterAdmin)
 admin.site.register(models.GeoLocation,GeoLocationAdmin)
 geo_admin.site.register(models.GeoObject, SettlementGeoDataAdmin)
 geo_admin.site.register(models.EventReport, EventReportAdmin)
+geo_admin.site.register(models.Gazetteer, GazetteerAdmin)
