@@ -170,7 +170,7 @@ class GazetteerSearchAlgorithm():
 							# only save the report if it doesn't exist
 							if not report.exists():
 								print " >> Saving report: %s (Weighting: %s, Level: %s) " % (report.title, weighting, top_place.level)
-								#report.save()
+								report.save()
 								reports.append(report)
 								reports_saved = reports_saved + 1
 							
