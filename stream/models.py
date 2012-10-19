@@ -45,6 +45,11 @@ class Gazetteer(models.Model):
 		"""
 		return self.name.title() in search_text.title() if self.name.strip() else False
 
+	def count_occurrences(self, search_text):
+		if search_text:
+			return search_text.title().count(self.name.title())
+		return 0
+
 	def __unicode__(self):
 		return "%s @ level:%s weighting: %s" % (self.name, self.level, self.weighting)
 
