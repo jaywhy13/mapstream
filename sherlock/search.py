@@ -1,28 +1,184 @@
 from listener.models import RawData, DataTag, DataSource, DataSourceType, DataSourceStatus
-from stream.models import EventReport, EventType, GeoLocation
+from stream.models import EventReport, EventType, GeoLocation, Gazetteer
 from sherlock.models import *
 from django.contrib.auth.models import User
-
+from django.contrib.gis.geos import GEOSGeometry
 
 import json
+
+
+class GazetteerSearchAlgorithm():
+	""" This agent does a smart search on RawData objects...
+	"""
+	name = "Gazetteer Search Algorithm"
+
+	def __init__(self):
+		self.sys_user = User.objects.get(username='system')
+
+	def do_search(self, search_text = None, title = None, raw_data = None, limit=5, event_types=None):
+		reports = []
+
+		if not search_text:
+			return reports
+
+		threshold = 40
+		
+		weightings = {}
+
+		if event_types is None:
+			event_types = EventType.objects.all()
+
+		#print "Searching gazetteer for places in %s" % title
+		print " -------------------------------------------"
+
+		# start searching each level
+		start_level = 0
+		end_level = 5
+
+		# read in the common list of words
+		f = open("data/words.txt")
+		common_words = []
+		if f:
+			txt = f.read()
+			common_words = txt.split('\n')
+		for event_type in event_types:
+			#print "Searching for occurence of event: %s" % event_type
+			weightings = {}
+			words = Word.get_word_chain(event_type.keyword) # use word chain instead
+			for word in words:
+				if word not in search_text:
+					continue
+
+				#print " Found occurrence of %s in text" % word
+				
+				for i in range(start_level,end_level):
+					level_weightings = {}
+					places = Gazetteer.objects.filter(level=i)
+							
+					for place in places:
+						if place.search(search_text): # search text for occurrence
+							print " Match found in %s (Place: %s, Word: %s, Level: %s)" % (title, place.name, word, i)
+							weighting = place.weighting
+
+							# =======================================================
+							# WEIGHTING CALCULATIONS
+							# =======================================================
+
+							# minus 30 for common words
+							if place.name.lower() in common_words:
+								weighting -= 30
+
+							# calculate the weighting based on proximity to lower levels 
+							if i > start_level:
+								total_distance = 0
+								lower_level_weightings = weightings.get(i-1, [])
+								for pk in lower_level_weightings:
+									lower_level_place = Gazetteer.objects.get(pk=pk)
+									results = Gazetteer.objects.filter(pk=place.pk).distance(lower_level_place.geom)
+									total_distance += results[0].distance.m
+									#total_distance += lower_level_place.geom.distance(place.geom)
+									print " Distance from %s to %s is %s" % (place.name, lower_level_place.name, total_distance)
+
+								if lower_level_weightings:
+									# minus the distance in km from the weighting 
+									distance_penalty = (total_distance/(1000 * (200/14.0)))
+									weighting = weighting - distance_penalty
+									print " Distance pentalty is %s" % distance_penalty
+							level_weightings[place.pk] = weighting
+					
+					# now minus the km distance from the centroid
+					place_ids = [place.pk for place in places]
+					bbox = Gazetteer.objects.filter(pk__in=place_ids).extent() if place_ids else None
+
+					if bbox:
+						centroid = GEOSGeometry("POINT (%s %s)" % ((bbox[0]+bbox[2])/2,(bbox[1]+bbox[3])/2))
+						for place_pk in level_weightings:
+							weighting = level_weightings.get(place_pk)
+							place = Gazetteer.objects.get(pk=place_pk)
+							distance_to_centroid = place.geom.distance(centroid)
+							weighting = weighting - (distance_to_centroid/1000)
+							level_weightings[place_pk] = weighting
+
+					# update the weightings
+					weightings[i] = level_weightings
+
+				# now lets figure out the highest level we have results for...
+				for i in reversed(range(start_level, end_level)):
+
+					level_weightings = weightings.get(i, {})
+					if level_weightings:
+						# group these into a list of tuples (place, weighting)  so we can sort them
+						tuple_listing = [ (place_pk, level_weightings[place_pk]) for place_pk in level_weightings ]
+						def comp(x, y):
+							if x[1] > y[1]:
+								return -1
+							elif x[1] < y[1]:
+								return 1
+							else:
+								return 0
+						tuple_listing.sort(comp)
+						# now only create reports for the top limit places
+						top_places = tuple_listing
+						reports_saved = 0
+						print " Saving top places"
+						for (top_place_pk, weighting) in top_places:
+							try:
+								top_place = Gazetteer.objects.get(pk=top_place_pk)
+							except Gazetteer.DoesNotExist:
+								continue
+
+							if weighting < threshold:
+								print "%s weighting of %s is below the threshold" % (top_place.name, weighting)
+								continue
+							report = create_event_report()
+							if title:
+								report.title = title + " (" + top_place.name + ")"
+							
+							report.event_type = event_type
+							report.location = top_place.geom.centroid
+							if raw_data:
+								report.occurred_at = raw_data.occurred_at
+								report.link = raw_data.link
+
+							# only save the report if it doesn't exist
+							if not report.exists():
+								print " + Saving report: %s (Weighting: %s, Level: %s) " % (report.title, weighting, top_place.level)
+								#report.save()
+								reports.append(report)
+								reports_saved = reports_saved + 1
+							
+							if reports_saved >= limit:
+								break
+							
+
+						print 
+						break # don't do any levels lower than this one
+			if reports:
+				print "------------------------------------------"
+				print
+		return reports
 
 
 class BasicSearchAlgorithm():
 	"""This agent does a simple search on RawData objects, tagging them as valid if it finds 'Jamaica' in them."""
 
+	name = "Basic Serach Algorithm"
+
 	def __init__(self):
 		self.sys_user = User.objects.get(username='system')
 
-	def do_search(self, search_text = None, title = None, raw_data = None):
+	def do_search(self, search_text = None, title = None, raw_data = None, event_types=None):
 
 		"""First pass of basic search algorithm"""
 		#search_text = search_text.lower()
 		# loop over our location
 
-		#print "Running basic search on text: %s" % title
+		print "Running basic search on text: %s" % title
 
 		locations = GeoLocation.objects.all() # need to do heirarchical search, parish then community
-		event_types = EventType.objects.all()
+		if not event_types:
+			event_types = EventType.objects.all()
+
 		reports = []
 		
 		if not search_text:
@@ -43,11 +199,12 @@ class BasicSearchAlgorithm():
 
 					if geotitle in search_text:
 						for event_type in event_types:
-							# print "    Searching for event type: %s (keyword=%s)" % (event_type,event_type.keyword)
+							# TODO: Ensure that this checks all the constraints of each event type
+							print "    Searching for event type: %s (keyword=%s)" % (event_type,event_type.keyword)
 							if event_type.keyword:
 								#words = Word.get_all_word_forms(event_type.keyword)
 								words = Word.get_word_chain(event_type.keyword) # use word chain instead
-								# print "     - Will search in %s" % [word for word in words]
+								print "     - Will search in %s" % [word for word in words]
 								for word in words:
 									# print "     Searching text for %s" % word
 									if word in search_text:
@@ -97,21 +254,30 @@ class BasicSearchAlgorithm():
 
 
 class BasicAgent():
-	def search(self, raw_data_set = None):
-		#print "Doing a basic search"
+	def search(self, raw_data_set = None, algorithm=None, event_types=None):
+		print "Basic agent asked to search..."
+		if not raw_data_set:
+			print "Will use ALL raw data"
+			raw_data_set = RawData.objects.all()
+
+		if not algorithm:
+			algorithm = BasicSearchAlgorithm()
+
+		print "Will use %s" % algorithm.name
+
 		all_reports = []
 		if raw_data_set:
 			for raw_data in raw_data_set:
-				bsa = BasicSearchAlgorithm()
 				title = raw_data.title
 				search_text = raw_data.data
-				reports = bsa.do_search(search_text = search_text, title = title, raw_data = raw_data)	
+				#print "Invoking %s on %s" % (algorithm.name, title)
+				reports = algorithm.do_search(search_text = search_text, title = title, raw_data = raw_data, event_types=event_types)	
 
 				if reports:
 					all_reports.extend(reports)
 		else:
-			#print "No raw data supplied"
-			pass
+			print "No raw data for Basic agent to search"
+		return all_reports
 
 class FacebookAgent(BasicAgent):
 
@@ -201,6 +367,16 @@ class GoogleReaderAgent(BasicAgent):
 			except KeyError as e:
 				#print e
 				pass
+
+def create_event_report():
+	"""For now ... creates a basic event report
+	"""
+	event_report = EventReport()
+	event_report.title = 'Sys created report'
+	(sysuser, created) = User.objects.get_or_create(username="system")
+	event_report.made_by = sysuser
+	event_report.confidence = 0.5
+	return event_report
 
 
 
