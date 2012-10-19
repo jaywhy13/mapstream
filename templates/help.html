@@ -1,0 +1,47 @@
+<html>
+	<head>
+	<title>MapStream Help Page</title>
+	<style type="text/css">
+		body, h1, h2, h3 {
+			font-family:Century Gothic;
+		}
+	</style>
+	</head>
+	<body>
+	<h1>MapStream Demo</h1>
+	<br/>
+	<p>
+		Welcome to the MapStream demo page. This page allows you to quick create themes that can be viewed on the 
+		main MapStream main page. For this demo MapStream has been configured to search the following sources for 
+		information.
+		<br/>
+		<ul>
+			<li>Jamaica Gleaner RSS Feed</li>
+			<li>Jamaica Information Service Web Page</li>
+			<li>Mona GeoInformatics' MapStream Demo Page</li>
+		</ul>
+	</p>
+	</br>
+
+	<h3>Current Themes</h3>
+	<p>
+		MapStream searches for the following themes:
+		</br>
+		<ul>
+		{% for theme in themes %}
+			<li>{{ theme.name }} - {{ theme.words }}
+
+		{% empty %}
+		<li>No themes present! Add one below</li>
+		{% endfor %}
+		</ul>
+	</p>
+
+
+	<h3>Add New Theme</h3>
+	<form method="POST" action="/help">
+	{{ form.as_p }}
+	</form>
+
+	</body>
+</html>

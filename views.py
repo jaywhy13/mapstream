@@ -4,6 +4,8 @@ from mapstream2.stream.models import Event, EventType 	# we may have to build a 
 from django.utils import simplejson
 from django.utils.safestring import mark_safe
 from django.core import serializers
+from theme.models import Theme
+from theme.forms import ThemeForm
 
 def home(request):
     return render_to_response('static/map/Main.html')
@@ -111,4 +113,11 @@ def _fetch_events_grouped(time_stamp=None, date_limit=None):
 			event_groups[location_key] = new_group
 
 	data['events'] = mark_safe(simplejson.dumps(event_groups))
+
+
+
+def help(request):
+	themes = Theme.objects.all()
+	form = ThemeForm()
+	return render_to_response("help.html", locals())
 
