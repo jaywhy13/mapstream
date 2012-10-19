@@ -1,14 +1,18 @@
 (function() {
+
   this.init = function() {
     this.geocoder = new google.maps.Geocoder();
     return $('#report_submit_button').prop('disabled', false);
   };
+
   this.geocodeResults = [];
+
   this.validateLocation = function() {
     return codeAddress($('#id_location').val(), function() {
       return $('#report_form').submit();
     });
   };
+
   this.codeAddress = function(address, callback) {
     return geocoder.geocode({
       'address': address
@@ -22,4 +26,5 @@
       }
     });
   };
+
 }).call(this);

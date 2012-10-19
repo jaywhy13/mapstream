@@ -1,0 +1,148 @@
+{
+   "layer":[
+      {
+         "id":"0",
+         "src_expr":"Incident.IncidentHasLocation.Location",
+         "label":"Homicide",
+         "description":"All Homicides in the system",
+         "colour":"#f5464b"
+      },
+      {
+         "id":"1",
+         "src_expr":"Incident.IncidentHasLocation.Location",
+         "label":"Suicide",
+         "description":"All Suicide in the system",
+         "colour":"#fede49"
+      },
+      {
+         "id":"2",
+         "src_expr":"Incident.IncidentHasLocation.Location",
+         "label":"Sexual Assault",
+         "description":"All Sexual Assaults in the system",
+         "colour":"#6bc561"
+      },
+      {
+         "id":"3",
+         "src_expr":"Incident.IncidentHasLocation.Location",
+         "label":"Motor Vehicle Theft",
+         "description":"All Motor Vehicle Thefts in the system",
+         "colour":"#ff7f45"
+      },
+      {
+         "id":"4",
+         "src_expr":"Incident.IncidentHasLocation.Location",
+         "label":"Non Intentional Fatality",
+         "description":"All Non Intentional Fatalities in the system",
+         "colour":"#0070c3"
+      },
+      {
+         "id":"5",
+         "src_expr":"Incident.IncidentHasLocation.Location",
+         "label":"Theft",
+         "description":"All Thefts in the system",
+         "colour":"#4abae8"
+      },
+      {
+         "id":"6",
+         "src_expr":"Incident.IncidentHasLocation.Location",
+         "label":"Traffic Fatality",
+         "description":"All Traffic Fatalities in the system",
+         "colour":"#ae62c8"
+      }
+   ],
+   "level":[
+      {
+         "id":"1",
+         "col_name":"police_division_id",
+         "label":"Police Division",
+         "max_zoom":"11",
+         "colour":"#4b4242"
+      },
+      {
+         "id":"2",
+         "col_name":"police_station_id",
+         "label":"Police Station",
+         "max_zoom":"10",
+         "colour":"#4b4242"
+      },
+      {
+         "id":"3",
+         "col_name":"community_id",
+         "label":"Community",
+         "max_zoom":"13",
+         "colour":"#4b4242"
+      },
+      {
+         "id":"0",
+         "col_name":"parish_id",
+         "label":"Parish",
+         "max_zoom":"13",
+         "colour":"#4b4242"
+      }
+   ],
+   "filters":[
+      {
+         "src_expr":"Incident",
+         "ds_name":"Incident",
+         "ds_field_name":"incident_date",
+         "label":"Date Of Incident",
+         "type":"date"
+      },
+      {
+         "src_expr":"Incident.IncidentHasLocation.Location",
+         "ds_name":"Location",
+         "ds_field_name":"parish_id",
+         "label":"parish_id",
+         "type":"int"
+      },
+      {
+         "src_expr":"Incident.IncidentHasVictim.Victim",
+         "ds_name":"Victim",
+         "ds_field_name":"age",
+         "label":"age",
+         "type":"int"
+      },
+      {
+         "src_expr":"Incident.IncidentHasVictim.Victim.VictimHasLocation.Location",
+         "ds_name":"Location",
+         "ds_field_name":"location_type_id",
+         "label":"location_type_id",
+         "type":"int"
+      },
+      {
+         "src_expr":"Incident.IncidentHasLocation.Location",
+         "ds_name":"Location",
+         "ds_field_name":"police_division_id",
+         "label":"police_division_id",
+         "type":"int"
+      },
+      {
+         "src_expr":"Incident.Homicide",
+         "ds_name":"Homicide",
+         "ds_field_name":"weapon_id",
+         "label":"Type Of Weapon",
+         "type":"int"
+      },
+      {
+         "src_expr":"Incident.IncidentHasLocation.Location",
+         "ds_name":"Location",
+         "ds_field_name":"community_id",
+         "label":"community_id",
+         "type":"int"
+      },
+      {
+         "src_expr":"Incident",
+         "ds_name":"Incident",
+         "ds_field_name":"day_of_week_id",
+         "label":"Day Of The Week",
+         "type":"int"
+      },
+      {
+         "src_expr":"Incident.IncidentHasLocation.Location",
+         "ds_name":"Location",
+         "ds_field_name":"police_station_id",
+         "label":"police_station_id",
+         "type":"int"
+      }
+   ]
+}

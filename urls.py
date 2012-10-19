@@ -1,4 +1,6 @@
 from django.conf.urls.defaults import patterns, include, url
+from django.views.generic.simple import redirect_to
+from mapstream2 import views as global_views
 from mapstream2.stream import views
 from mapstream2.listener import views as l_api
 import timeline
@@ -13,6 +15,8 @@ urlpatterns = patterns('',
     # url(r'^$', 'mapstream2.views.home', name='home'),
     url(r'^$', views.home, name='home'),
     url(r'^report$', views.report_event, name='report'),
+    url(r'^map/$', global_views.map),
+    url(r'^favicon\.ico$', redirect_to, {'url': 'mapstream/static/images/favicon.ico'}),
     
     # data api:
     url(r'^data/(\w+)/(\w*)', views.list_data, name='data_api'),
@@ -23,6 +27,8 @@ urlpatterns = patterns('',
     url(r'^listener/(\w+)/(\w*)', l_api.list_data, name='listener_api'),	# will make it more strict eventually -- dont remember what this is for!!
     # url(r'^mapstream2/', include('mapstream2.foo.urls')),
 
+    # search urls:
+    url(r'^search$', views.basic_search, name='search'),
     # timeline api
     url(r'^time/', include(timeline.urls.urlpatterns)),
 

@@ -7,9 +7,10 @@ from django.core.urlresolvers import resolve
 from stream.models import EventReport, EventType, Event, SecureView
 from django.contrib.auth.models import User
 import json, time, datetime
+from django.db.models import Q, Count
 
 def home(request):
-	response = "Mapstream Server II v0.1 (Staging Area)"
+	response = "Mapstream Server II v0.2"
 	return HttpResponse(response)
 
 
@@ -120,6 +121,8 @@ def _list_event(request, objectId, secure_params=None):
 			events = Event.objects.filter(occurred_at__gte=date_limit)
 		if format == 'map':
 			event_json = _prepare_map_json(request, events, secure_params)
+		elif format == 'htmlmap':
+			event_json = _prepare_html_map_json(request, events, secure_params)
 		else:
 			event_json = serializers.serialize('json', events, indent=4 if pretty else None, sort_keys=pretty)
 		return HttpResponse(event_json, content_type='application/json')
@@ -145,6 +148,54 @@ def _prepare_map_json(request, events, secure_params=None):
 		"events": results,
 	}
 	map_json = json.dumps(map_result, indent=4 if pretty else None, sort_keys=pretty)
+	return map_json
+
+def _prepare_html_map_json(request, events, secure_params=None):
+	parameters = _choose_parameters(request, secure_params)
+	pretty = 'pretty' in parameters
+	event_groups = {}
+	for event in events:
+		location_key = u'%s, %s' % (event.location.y, event.location.x)
+		event_info = {
+			'id': event.id,
+			'name': event.name,
+			'desc': event.description,
+			'type_id': event.event_type.id,
+			'occured': event.occurred_at.strftime('%a %b %d, %Y at %I:%M %p'),
+		}
+		if location_key in event_groups:
+			group = event_groups[location_key]
+			group['events'].append(event_info)
+		else:
+			# key is not there yet ... so create it
+			new_group = {
+				'lat': event.location.y,
+				'lng': event.location.x,
+				'events': [],
+			}
+			new_group['events'].append(event_info)
+			event_groups[location_key] = new_group
+
+	# data['events'] = mark_safe(simplejson.dumps(event_groups))
+	# For now ... hardcode this, but ideally it should be passed in as a GET parameter or something similar
+	date_limit = datetime.date.today() - datetime.timedelta(weeks=1)
+	all_events = Event.objects.filter(occurred_at__gte=date_limit)
+	count_by_type = all_events.values('event_type').annotate(amt=Count('event_type'))
+	counts = []
+	for event_count in count_by_type:
+		new_count = {
+			'type_id': event_count['event_type'],
+			'count': event_count['amt'],
+		}
+		counts.append(new_count)
+
+	result = {
+		'timestamp': time.time(),
+		'groups': event_groups,
+		'layer_counts': counts,
+	}
+	# print events.values('event_type').annotate(amt=Count('event_type'))
+	map_json = json.dumps(result, indent=4 if pretty else None, sort_keys=pretty)
 	return map_json
 
 def _choose_parameters(request, secure_params):
@@ -183,5 +234,28 @@ def get_map_settings(request, secure_params=None):
 	settings_json = json.dumps(settings, indent=4 if pretty else None, sort_keys=pretty)
 
 	return HttpResponse(settings_json, content_type='application/json')
+
+def basic_search(request):
+	pretty = 'pretty' in request.GET
+	if 'query' in request.GET and request.GET['query']:
+		query = request.GET['query']
+		# ideally we'd want to be able to search the location field too ... for now just name and description
+		events = Event.objects.filter(Q(name__icontains=query) | Q(description__icontains=query))
+		search_result = []
+		for event in events:
+			new_result = {
+				'id': event.id,
+				'name': event.name,
+				'description': event.description,
+				'type_id': event.event_type.id,
+			}
+			search_result.append(new_result)
+		
+		search_json = json.dumps(search_result, indent=4 if pretty else None, sort_keys=pretty)
+		return HttpResponse(search_json, content_type='application/json')
+	else:
+		search_result = []
+		search_json = json.dumps(search_result, indent=4 if pretty else None, sort_keys=pretty)
+		return HttpResponse(search_json, content_type='application/json')
 
 
